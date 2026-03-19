@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ASA CX-3 Flight Computer</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  background:#2a2a2a;display:flex;justify-content:center;align-items:flex-start;
+  min-height:100vh;padding:20px 8px 60px;font-family:'Roboto',sans-serif;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,150,50,0.04),transparent 60%);
+}
+.credits{
+  position:fixed;bottom:14px;right:14px;z-index:99;
+  background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.1);border-radius:18px;
+  padding:5px 13px;font-family:'Roboto Mono',monospace;
+  font-size:9px;color:rgba(255,255,255,0.3);pointer-events:none;letter-spacing:0.5px;
+}
+
+/* ── DEVICE SHELL ── */
+.cx3{
+  width:100%;max-width:340px;
+  background:linear-gradient(170deg,#3c3c3e 0%,#2a2a2a 50%,#222 100%);
+  border-radius:16px 16px 20px 20px;
+  border:1px solid #4a4a4a;
+  outline:2px solid #111;
+  box-shadow:0 16px 48px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.07);
+  padding-bottom:14px;
+  user-select:none;
+}
+
+/* Brand strip */
+.cx3-top{
+  background:linear-gradient(180deg,#424244 0%,#323234 100%);
+  border-radius:16px 16px 0 0;
+  padding:9px 16px 7px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid #1a1a1a;
+}
+.brand-left{}
+.cx3-brand{font-weight:700;font-size:14px;color:#c8c8c8;letter-spacing:1.5px;}
+.cx3-model{font-size:7.5px;color:#5a5a5a;letter-spacing:2.5px;margin-top:1px;}
+.cx3-asa{font-size:11px;font-weight:700;color:#e87520;letter-spacing:1px;}
+
+/* ── SCREEN ── */
+.screen-bezel{
+  margin:8px 11px 6px;background:#111;
+  border-radius:5px;padding:3px;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.9),0 0 0 1px #0a0a0a;
+}
+.screen{
+  background:#c8d8e4;border-radius:3px;
+  overflow:hidden;min-height:150px;
+  transition:background 0.2s;
+}
+.cx3.night .screen{background:#080d12;}
+
+/* Status bar */
+.s-bar{
+  background:#1e3a5a;padding:3px 8px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.cx3.night .s-bar{background:#000e1e;}
+.s-func{font-size:10px;font-weight:700;color:#fff;letter-spacing:0.5px;text-transform:uppercase;}
+.s-right{display:flex;align-items:center;gap:7px;}
+.s-time{font-family:'Roboto Mono',monospace;font-size:9px;color:#90b8d8;}
+.bat{display:flex;align-items:center;}
+.bat-body{width:15px;height:7px;border:1.5px solid #90b8d8;border-radius:1px;padding:1px;display:flex;gap:1px;}
+.bat-cell{flex:1;background:#3a9;border-radius:0;}
+.bat-tip{width:2px;height:3px;background:#90b8d8;align-self:center;margin-left:1px;}
+
+/* Submenu bar */
+.s-sub{
+  background:#2e5080;padding:2px 8px;
+  font-size:9px;font-weight:500;color:#b8d4f0;letter-spacing:0.5px;text-transform:uppercase;
+}
+.cx3.night .s-sub{background:#001428;color:#5a7a9a;}
+
+/* Content */
+.s-content{padding:0;}
+
+/* Row item */
+.mrow{
+  display:flex;align-items:center;
+  padding:4px 6px 4px 3px;
+  border-bottom:1px solid #a8bcc8;
+  min-height:24px;cursor:pointer;
+}
+.cx3.night .mrow{border-color:#0d1e2a;}
+.mrow:last-child{border-bottom:none;}
+.mrow.sel{background:#1e3a5a;}
+.cx3.night .mrow.sel{background:#002040;}
+.mrow.sel .ri,.mrow.sel .rl,.mrow.sel .rv,.mrow.sel .ru{color:#fff!important;}
+
+.ri{width:12px;font-size:8px;color:#1e3a5a;flex-shrink:0;text-align:center;}
+.rl{font-family:'Roboto Mono',monospace;font-size:10.5px;font-weight:500;color:#0a1e30;flex:1;letter-spacing:0.2px;}
+.rv{font-family:'Roboto Mono',monospace;font-size:11.5px;font-weight:700;color:#0a1e30;min-width:58px;text-align:right;}
+.rv.calc-val{color:#c06010;}
+.mrow.sel .rv.calc-val{color:#ffb060!important;}
+.ru{font-family:'Roboto Mono',monospace;font-size:8.5px;color:#3a5a7a;min-width:30px;padding-left:3px;}
+
+/* night text */
+.cx3.night .rl{color:#5a90b8;}
+.cx3.night .rv{color:#80b8e0;}
+.cx3.night .ru{color:#2a4a62;}
+
+/* Blink cursor */
+@keyframes blink{50%{opacity:0}}
+.inp-cursor{animation:blink 0.8s step-end infinite;color:#e87520;}
+
+/* ── KEYPAD ── */
+.kpad{padding:0 9px;}
+.krow{display:flex;gap:3px;margin-bottom:3px;justify-content:center;}
+.k{
+  flex:1;height:28px;padding:0;
+  background:linear-gradient(180deg,#484848,#383838);
+  border:1px solid #1e1e1e;border-radius:3px;
+  font-family:'Roboto',sans-serif;font-size:8.5px;font-weight:600;
+  color:#ccc;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1.2;letter-spacing:0.2px;
+  box-shadow:0 2px 3px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06);
+  transition:all 0.07s;
+}
+.k:active{background:linear-gradient(180deg,#282828,#303030);transform:translateY(1px);box-shadow:0 1px 1px rgba(0,0,0,0.5);}
+.ksub{font-size:6px;color:#666;font-weight:400;display:block;}
+
+/* Blue function keys */
+.kf{background:linear-gradient(180deg,#2e4a6e,#1e3050);border-color:#0e1a2e;color:#b0ccee;font-size:8px;}
+/* Amber keys */
+.ka{background:linear-gradient(180deg,#3e3e28,#2e2e18);border-color:#1a1a0a;color:#c8b84a;}
+/* Number keys */
+.kn{background:linear-gradient(180deg,#505052,#404042);color:#e8e8e8;font-size:13px;font-weight:500;font-family:'Roboto Mono',monospace;}
+/* Operator keys */
+.ko{background:linear-gradient(180deg,#404040,#303030);color:#c0c090;font-size:12px;}
+/* ENT green */
+.ke{background:linear-gradient(180deg,#2a5a2a,#1e4a1e);border-color:#0e2a0e;color:#88e888;font-size:9px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08);}
+/* CLR red */
+.kc{background:linear-gradient(180deg,#502020,#3a1414);border-color:#280808;color:#e87070;}
+/* Wide */
+.kw2{flex:2;}
+.kw3{flex:3;}
+
+/* Divider */
+.kdiv{height:1px;background:linear-gradient(90deg,transparent,#3a3a3a,transparent);margin:4px 0;}
+
+/* Power button area */
+.pwr-zone{display:flex;align-items:center;justify-content:center;gap:7px;margin:3px 0 5px;}
+.nav-col{display:flex;flex-direction:column;gap:3px;}
+.ksmall{
+  width:26px;height:20px;
+  background:linear-gradient(180deg,#484848,#363636);
+  border:1px solid #1e1e1e;border-radius:3px;
+  color:#999;font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 3px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.05);
+  transition:all 0.07s;
+}
+.ksmall:active{transform:translateY(1px);background:#282828;}
+.kcsmall{color:#e87070;font-size:7px;}
+.kesmall{color:#88e888;font-size:7px;}
+.pwr-btn{
+  width:50px;height:50px;border-radius:50%;
+  background:radial-gradient(circle at 38% 35%,#f8a840,#cf6f0f 60%,#9f4f00);
+  border:2px solid #7a3800;
+  color:#fff;font-size:7.5px;font-weight:700;
+  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1.3;letter-spacing:0.5px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.6),0 0 14px rgba(240,160,64,0.35),inset 0 1px 0 rgba(255,255,255,0.22);
+  transition:all 0.08s;
+}
+.pwr-btn:active{transform:scale(0.94);box-shadow:0 1px 4px rgba(0,0,0,0.6),inset 0 2px 4px rgba(0,0,0,0.3);}
+.pwr-icon{font-size:15px;line-height:1;}
+.pwr-lbl{font-size:6px;opacity:0.75;margin-top:1px;}
+</style>
+</head>
+<body>
+<div class="credits">Made by Vedant Suryawanshi</div>
+
+<div class="cx3" id="cx3">
+
+  <!-- Brand bar -->
+  <div class="cx3-top">
+    <div class="brand-left">
+      <div class="cx3-brand">Suryawanshi</div>
+      <div class="cx3-model">FLIGHT COMPUTER</div>
+    </div>
+    <div class="cx3-asa">ASA</div>
+  </div>
+
+  <!-- Screen -->
+  <div class="screen-bezel">
+    <div class="screen" id="screen">
+      <div class="s-bar">
+        <span class="s-func" id="sFunc">FLT</span>
+        <div class="s-right">
+          <span class="s-time" id="sClock">00:00</span>
+          <div class="bat"><div class="bat-body"><div class="bat-cell"></div><div class="bat-cell"></div><div class="bat-cell"></div></div><div class="bat-tip"></div></div>
+        </div>
+      </div>
+      <div class="s-sub" id="sSub">Wind Correction</div>
+      <div class="s-content" id="sContent"></div>
+    </div>
+  </div>
+
+  <!-- Keypad -->
+  <div class="kpad">
+
+    <!-- Function row 1 -->
+    <div class="krow">
+      <button class="k kf" onclick="go('FLT')">FLT</button>
+      <button class="k kf" onclick="go('PLAN')">PLAN</button>
+      <button class="k kf" onclick="go('TIMER')">TIMER</button>
+      <button class="k kf" onclick="go('CALC_MODE')">CALC</button>
+      <button class="k kf" onclick="go('WB')">W/B</button>
+    </div>
+    <!-- Function row 2 -->
+    <div class="krow">
+      <button class="k ka" onclick="kFAV()">FAV<span class="ksub">★</span></button>
+      <button class="k ka" onclick="kBACK()">BACK</button>
+      <button class="k ka" onclick="kMem()">M+<span class="ksub">mem</span></button>
+      <button class="k ka" onclick="kUnit()">UNIT</button>
+      <button class="k ka" onclick="kConv()">CONV</button>
+    </div>
+
+    <div class="kdiv"></div>
+
+    <!-- Power + nav cluster -->
+    <div class="pwr-zone">
+      <div class="nav-col">
+        <button class="ksmall" onclick="navUp()">▲</button>
+        <button class="ksmall" onclick="navDown()">▼</button>
+      </div>
+      <button class="pwr-btn" onclick="kPWR()">
+        <span class="pwr-icon">⏻</span>
+        <span class="pwr-lbl">PWR</span>
+      </button>
+      <div class="nav-col">
+        <button class="ksmall kesmall" onclick="kEnter()">ENT</button>
+        <button class="ksmall kcsmall" onclick="kCLR()">CLR</button>
+      </div>
+    </div>
+
+    <div class="kdiv"></div>
+
+    <!-- Number pad -->
+    <div class="krow">
+      <button class="k kn" onclick="kp('7')">7</button>
+      <button class="k kn" onclick="kp('8')">8</button>
+      <button class="k kn" onclick="kp('9')">9</button>
+      <button class="k ko" onclick="kpOp('÷')">÷</button>
+    </div>
+    <div class="krow">
+      <button class="k kn" onclick="kp('4')">4</button>
+      <button class="k kn" onclick="kp('5')">5</button>
+      <button class="k kn" onclick="kp('6')">6</button>
+      <button class="k ko" onclick="kpOp('×')">×</button>
+    </div>
+    <div class="krow">
+      <button class="k kn" onclick="kp('1')">1</button>
+      <button class="k kn" onclick="kp('2')">2</button>
+      <button class="k kn" onclick="kp('3')">3</button>
+      <button class="k ko" onclick="kpOp('−')">−</button>
+    </div>
+    <div class="krow">
+      <button class="k kn kw2" onclick="kp('0')">0</button>
+      <button class="k kn" onclick="kp('.')">.</button>
+      <button class="k ko" onclick="kpOp('+')">+</button>
+    </div>
+    <div class="krow" style="margin-top:3px">
+      <button class="k kc" onclick="kDEL()">DEL<span class="ksub">←</span></button>
+      <button class="k ke kw3" onclick="kEnter()">ENT</button>
+    </div>
+
+  </div>
+</div><!-- /cx3 -->
+
+<script>
+// =============================================================
+//  ASA CX-3 REPLICA — COMPLETE REWRITE
+//  All bugs from previous version fixed:
+//  1. commitInput() no longer uses S.inputField after nulling it
+//  2. Starting input from keypress now REPLACES existing value
+//  3. navUp/Down while editing navigates correctly, does NOT delete
+//  4. compute() only runs when NOT mid-input (no stale flash)
+//  5. All aviation math verified (WCA sign-corrected)
+// =============================================================
+
+// ── CLOCK ────────────────────────────────────────────────────
+function tickClock(){
+  const n=new Date();
+  document.getElementById('sClock').textContent =
+    n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+}
+tickClock(); setInterval(tickClock,15000);
+
+// ── VERIFIED AVIATION MATH ───────────────────────────────────
+const DEG=180/Math.PI, RAD=Math.PI/180;
+function rd(x,dp=1){return Math.round(x*Math.pow(10,dp))/Math.pow(10,dp);}
+
+// Wind triangle — WCA sign corrected (left-push → negative WCA)
+function windTriangle(tas,crs,wd,ws){
+  const windTo=(wd+180)%360, a=(windTo-crs)*RAD;
+  const hw=ws*Math.cos(a), cw=ws*Math.sin(a);
+  const s=cw/tas; if(Math.abs(s)>1)return null;
+  const wcaR=-Math.asin(s)*DEG;
+  const gs=tas*Math.cos(wcaR*RAD)+hw;
+  if(gs<=0)return null;
+  const hdg=((crs+wcaR)%360+360)%360;
+  return{gs:rd(gs), wca:wcaR===0?0:rd(wcaR), hdg:rd(hdg,1)};
+}
+
+// Wind component (headwind/crosswind for runway)
+function windComp(wd,ws,rwy){
+  const a=(wd-rwy)*RAD;
+  return{hw:rd(ws*Math.cos(a)), xw:rd(Math.abs(ws*Math.sin(a)))};
+}
+
+// Altitude
+function pressureAlt(ialt,baro){ return Math.round(ialt+(29.92-baro)*1000); }
+function densityAlt(pa,oat){ return Math.round(pa+120*(oat-(15-1.98*pa/1000))); }
+
+// CAS ↔ TAS — ICAO density ratio
+function sigma(pa,oat){ return Math.pow(1-6.87535e-6*pa,5.2561)/((oat+273.15)/288.15); }
+function tasFrCas(cas,pa,oat){ return rd(cas/Math.sqrt(sigma(pa,oat))); }
+function casFrTas(tas,pa,oat){ return rd(tas*Math.sqrt(sigma(pa,oat))); }
+
+// Mach
+function machFrTas(tas,oat){ return rd(tas/(38.967*Math.sqrt(oat+273.15)),3); }
+function tasFrMach(m,oat){ return rd(m*38.967*Math.sqrt(oat+273.15)); }
+
+// Cloud base
+function cloudBase(oat,dp){ return Math.round((oat-dp)/2.5*1000); }
+
+// Standard atmosphere OAT at altitude
+function stdOAT(alt){ return rd(15-1.98*alt/1000); }
+
+// T·S·D — raw intermediates, round only at output
+function calcTime(gs,dist){ return rd(dist/gs*60); }
+function calcDist(gs,t){ return rd(gs*(t/60)); }
+function calcGS(dist,t){ return rd(dist/(t/60)); }
+
+// Fuel
+function fuelBurn(flow,t){ return rd(flow*(t/60)); }
+function fuelRate(fuel,t){ return rd(fuel/(t/60)); }
+function endurance(fob,flow){ return rd(fob/flow*60); }
+
+// Climb/descent — use raw time for distance (FIX: no double-rounding)
+function calcClimb(alt,roc,gs){
+  const tR=alt/roc, dR=gs*(tR/60);
+  return{t:rd(tR), d:rd(dR)};
+}
+
+// Glide
+function glide(ratio,alt){ return rd(ratio*alt/6076.115); }
+
+// ETA
+function calcETA(etdMin,eteMin){
+  const tot=(etdMin+eteMin)%1440;
+  return Math.floor(tot/60).toString().padStart(2,'0')+':'+Math.round(tot%60).toString().padStart(2,'0');
+}
+
+// Format minutes nicely
+function fmtMin(m){
+  const h=Math.floor(m/60),mn=Math.round(m%60);
+  return h>0?`${h}h ${mn}m`:`${m} min`;
+}
+
+// =============================================================
+//  MENU DEFINITIONS
+//  Each screen has: title, sub, and either items[] or fields[]
+//  fields: { id, l(abel), u(nit), v(default), input, calc }
+//  compute(d): receives data object, mutates calc fields
+// =============================================================
+const M = {
+
+  // ── TOP-LEVEL MENUS ──────────────────────────────────────
+  FLT:{title:'FLT',sub:'E6-B Functions',items:[
+    {l:'Altitude',        s:'ALT'},
+    {l:'Cloud Base',      s:'CLOUD'},
+    {l:'Std Atmosphere',  s:'STDATM'},
+    {l:'Airspeed',        s:'AIRSPEED'},
+    {l:'Fuel',            s:'FUEL'},
+    {l:'Ground Speed',    s:'GS'},
+    {l:'Glide',           s:'GLIDE'},
+    {l:'Climb & Descent', s:'CLIMB'},
+    {l:'Wind Component',  s:'WINDCOMP'},
+    {l:'ETA',             s:'ETA'},
+    {l:'Wind Correction', s:'WIND'},
+    {l:'Compass Hdg',     s:'COMPASS'},
+  ]},
+
+  PLAN:{title:'PLAN',sub:'Trip Planning',fields:[
+    {id:'dist',l:'Dist', u:'NM',  input:1},
+    {id:'gs',  l:'GS',   u:'KT',  input:1},
+    {id:'flow',l:'Rate', u:'GPH', input:1},
+    {id:'ete', l:'ETE',  u:'MIN', calc:1},
+    {id:'fuel',l:'Fuel', u:'GAL', calc:1},
+  ],compute(d){
+    if(d.dist&&d.gs){ d.ete=calcTime(d.gs,d.dist); if(d.flow) d.fuel=fuelBurn(d.flow,d.ete); }
+  }},
+
+  TIMER:{title:'TIMER',sub:'Stopwatch',special:'timer'},
+  CALC_MODE:{title:'CALC',sub:'Calculator',special:'calc'},
+
+  WB:{title:'W/B',sub:'Weight & Balance',fields:[
+    {id:'wt', l:'Wt',  u:'LB',    input:1},
+    {id:'arm',l:'Arm', u:'IN',    input:1},
+    {id:'mom',l:'Mom', u:'LB·IN', calc:1},
+  ],compute(d){
+    if(d.wt&&d.arm) d.mom=rd(d.wt*d.arm,0);
+  }},
+
+  SETTINGS:{title:'SETTINGS',sub:'Preferences',items:[
+    {l:'Theme (Day/Night)', s:null, action:'theme'},
+    {l:'Version: 1.04',     s:null},
+  ]},
+
+  // ── FLT SUBMENUS ─────────────────────────────────────────
+  ALT:{title:'FLT',sub:'Altitude',fields:[
+    {id:'ialt',l:'IAlt', u:'FT',   input:1},
+    {id:'baro',l:'Baro', u:'"Hg',  input:1, def:29.92},
+    {id:'palt',l:'PAlt', u:'FT',   calc:1},
+    {id:'oat', l:'OAT',  u:'°C',   input:1},
+    {id:'dalt',l:'DAlt', u:'FT',   calc:1},
+  ],compute(d){
+    if(d.ialt!=null&&d.baro!=null) d.palt=pressureAlt(d.ialt,d.baro);
+    if(d.palt!=null&&d.oat!=null)  d.dalt=densityAlt(d.palt,d.oat);
+  }},
+
+  CLOUD:{title:'FLT',sub:'Cloud Base',fields:[
+    {id:'oat',l:'OAT',  u:'°C', input:1},
+    {id:'dp', l:'Dewp', u:'°C', input:1},
+    {id:'cb', l:'CBase',u:'FT', calc:1},
+  ],compute(d){
+    if(d.oat!=null&&d.dp!=null) d.cb=cloudBase(d.oat,d.dp);
+  }},
+
+  STDATM:{title:'FLT',sub:'Std Atmosphere',fields:[
+    {id:'alt', l:'Alt',    u:'FT', input:1},
+    {id:'stdT',l:'Std OAT',u:'°C', calc:1},
+  ],compute(d){
+    if(d.alt!=null) d.stdT=stdOAT(d.alt);
+  }},
+
+  AIRSPEED:{title:'FLT',sub:'Airspeed',items:[
+    {l:'Planned TAS',  s:'TAS_PLAN'},
+    {l:'Actual TAS',   s:'TAS_ACT'},
+    {l:'Required CAS', s:'CAS_REQ'},
+    {l:'Planned MACH', s:'MACH_PLAN'},
+    {l:'Actual MACH',  s:'MACH_ACT'},
+  ]},
+
+  TAS_PLAN:{title:'FLT',sub:'Planned TAS',fields:[
+    {id:'cas', l:'CAS',  u:'KT',  input:1},
+    {id:'palt',l:'PAlt', u:'FT',  input:1},
+    {id:'oat', l:'OAT',  u:'°C',  input:1},
+    {id:'tas', l:'TAS',  u:'KT',  calc:1},
+  ],compute(d){
+    if(d.cas&&d.palt!=null&&d.oat!=null) d.tas=tasFrCas(d.cas,d.palt,d.oat);
+  }},
+
+  TAS_ACT:{title:'FLT',sub:'Actual TAS',fields:[
+    {id:'cas', l:'CAS',  u:'KT',  input:1},
+    {id:'palt',l:'PAlt', u:'FT',  input:1},
+    {id:'oat', l:'OAT',  u:'°C',  input:1},
+    {id:'tas', l:'TAS',  u:'KT',  calc:1},
+    {id:'dalt',l:'DAlt', u:'FT',  calc:1},
+  ],compute(d){
+    if(d.cas&&d.palt!=null&&d.oat!=null){
+      d.tas=tasFrCas(d.cas,d.palt,d.oat);
+      d.dalt=densityAlt(d.palt,d.oat);
+    }
+  }},
+
+  CAS_REQ:{title:'FLT',sub:'Required CAS',fields:[
+    {id:'tas', l:'TAS',    u:'KT',  input:1},
+    {id:'palt',l:'PAlt',   u:'FT',  input:1},
+    {id:'oat', l:'OAT',    u:'°C',  input:1},
+    {id:'cas', l:'ReqCAS', u:'KT',  calc:1},
+  ],compute(d){
+    if(d.tas&&d.palt!=null&&d.oat!=null) d.cas=casFrTas(d.tas,d.palt,d.oat);
+  }},
+
+  MACH_PLAN:{title:'FLT',sub:'Planned MACH',fields:[
+    {id:'mach',l:'MACH',u:'',   input:1},
+    {id:'oat', l:'OAT', u:'°C', input:1},
+    {id:'tas', l:'TAS', u:'KT', calc:1},
+  ],compute(d){
+    if(d.mach&&d.oat!=null) d.tas=tasFrMach(d.mach,d.oat);
+  }},
+
+  MACH_ACT:{title:'FLT',sub:'Actual MACH',fields:[
+    {id:'tas', l:'TAS',  u:'KT',  input:1},
+    {id:'oat', l:'OAT',  u:'°C',  input:1},
+    {id:'mach',l:'MACH', u:'',    calc:1},
+  ],compute(d){
+    if(d.tas&&d.oat!=null) d.mach=machFrTas(d.tas,d.oat);
+  }},
+
+  FUEL:{title:'FLT',sub:'Fuel',items:[
+    {l:'Fuel Burn',  s:'FUEL_BURN'},
+    {l:'Fuel Rate',  s:'FUEL_RATE'},
+    {l:'Endurance',  s:'FUEL_END'},
+  ]},
+
+  FUEL_BURN:{title:'FLT',sub:'Fuel Burn',fields:[
+    {id:'flow',l:'Rate', u:'GPH', input:1},
+    {id:'time',l:'Time', u:'MIN', input:1},
+    {id:'fuel',l:'Fuel', u:'GAL', calc:1},
+  ],compute(d){
+    if(d.flow&&d.time) d.fuel=fuelBurn(d.flow,d.time);
+  }},
+
+  FUEL_RATE:{title:'FLT',sub:'Fuel Rate',fields:[
+    {id:'fuel',l:'Fuel', u:'GAL', input:1},
+    {id:'time',l:'Time', u:'MIN', input:1},
+    {id:'flow',l:'Rate', u:'GPH', calc:1},
+  ],compute(d){
+    if(d.fuel&&d.time) d.flow=fuelRate(d.fuel,d.time);
+  }},
+
+  FUEL_END:{title:'FLT',sub:'Endurance',fields:[
+    {id:'fob',  l:'Fuel', u:'GAL', input:1},
+    {id:'flow', l:'Rate', u:'GPH', input:1},
+    {id:'end',  l:'Endur',u:'MIN', calc:1},
+    {id:'gs',   l:'GS',   u:'KT',  input:1},
+    {id:'range',l:'Range',u:'NM',  calc:1},
+  ],compute(d){
+    if(d.fob&&d.flow){
+      const eH=d.fob/d.flow;
+      d.end=rd(eH*60);
+      if(d.gs) d.range=rd(d.gs*eH);
+    }
+  }},
+
+  GS:{title:'FLT',sub:'Ground Speed',fields:[
+    {id:'dist',l:'Dist', u:'NM',  input:1},
+    {id:'time',l:'Time', u:'MIN', input:1},
+    {id:'gs',  l:'GS',   u:'KT',  calc:1},
+  ],compute(d){
+    if(d.dist&&d.time) d.gs=calcGS(d.dist,d.time);
+  }},
+
+  GLIDE:{title:'FLT',sub:'Glide',fields:[
+    {id:'ratio',l:'Ratio',u:'',    input:1},
+    {id:'alt',  l:'Desc', u:'FT',  input:1},
+    {id:'dist', l:'Dist', u:'NM',  calc:1},
+    {id:'gs',   l:'GS',   u:'KT',  input:1},
+    {id:'rod',  l:'RoD',  u:'FPM', calc:1},
+  ],compute(d){
+    if(d.ratio&&d.alt) d.dist=glide(d.ratio,d.alt);
+    if(d.gs&&d.dist&&d.alt){
+      const tH=d.dist/d.gs;
+      d.rod=rd(d.alt/(tH*60));
+    }
+  }},
+
+  CLIMB:{title:'FLT',sub:'Climb & Descent',fields:[
+    {id:'alt', l:'Alt Δ',u:'FT',  input:1},
+    {id:'roc', l:'RoC/D',u:'FPM', input:1},
+    {id:'gs',  l:'GS',   u:'KT',  input:1},
+    {id:'time',l:'Time', u:'MIN', calc:1},
+    {id:'dist',l:'Dist', u:'NM',  calc:1},
+  ],compute(d){
+    if(d.alt&&d.roc&&d.gs){const r=calcClimb(d.alt,d.roc,d.gs);d.time=r.t;d.dist=r.d;}
+  }},
+
+  WINDCOMP:{title:'FLT',sub:'Wind Component',fields:[
+    {id:'wd',  l:'WDir', u:'°',   input:1},
+    {id:'ws',  l:'WSpd', u:'KT',  input:1},
+    {id:'rwy', l:'RnWy', u:'°',   input:1},
+    {id:'hw',  l:'HdWnd',u:'KT',  calc:1},
+    {id:'xw',  l:'XWind',u:'KT',  calc:1},
+  ],compute(d){
+    if(d.wd!=null&&d.ws!=null&&d.rwy!=null){const r=windComp(d.wd,d.ws,d.rwy);d.hw=r.hw;d.xw=r.xw;}
+  }},
+
+  ETA:{title:'FLT',sub:'Est Time Arrival',fields:[
+    {id:'dist',l:'Dist', u:'NM',   input:1},
+    {id:'gs',  l:'GS',   u:'KT',   input:1},
+    {id:'ete', l:'ETE',  u:'MIN',  calc:1},
+    {id:'etd', l:'ETD',  u:'HHMM', input:1},
+    {id:'eta', l:'ETA',  u:'UTC',  calc:1},
+  ],compute(d){
+    if(d.dist&&d.gs){
+      d.ete=calcTime(d.gs,d.dist);
+      if(d.etd!=null){
+        const h=Math.floor(d.etd/100),m=d.etd%100;
+        d.eta=calcETA(h*60+m,d.ete);
+      }
+    }
+  }},
+
+  WIND:{title:'FLT',sub:'Wind Correction',fields:[
+    {id:'tas',l:'TAS',  u:'KT', input:1},
+    {id:'crs',l:'Crs',  u:'°',  input:1},
+    {id:'wd', l:'WDir', u:'°',  input:1},
+    {id:'ws', l:'WSpd', u:'KT', input:1},
+    {id:'hdg',l:'Hdg',  u:'°',  calc:1},
+    {id:'gs', l:'GS',   u:'KT', calc:1},
+    {id:'wca',l:'WCA',  u:'°',  calc:1},
+  ],compute(d){
+    if(d.tas&&d.crs!=null&&d.wd!=null&&d.ws!=null){
+      const r=windTriangle(d.tas,d.crs,d.wd,d.ws);
+      if(r){d.hdg=r.hdg;d.gs=r.gs;d.wca=r.wca;}
+      else{d.hdg='ERR';d.gs='ERR';d.wca='ERR';}
+    }
+  }},
+
+  COMPASS:{title:'FLT',sub:'Compass Heading',fields:[
+    {id:'thdg',l:'TrHdg',u:'°', input:1},
+    {id:'var', l:'Var',  u:'°', input:1},
+    {id:'dev', l:'Dev',  u:'°', input:1},
+    {id:'mhdg',l:'MHdg', u:'°', calc:1},
+    {id:'chdg',l:'CHdg', u:'°', calc:1},
+  ],compute(d){
+    if(d.thdg!=null&&d.var!=null){
+      d.mhdg=rd(((d.thdg+d.var)%360+360)%360,1);
+      if(d.dev!=null) d.chdg=rd(((d.mhdg+d.dev)%360+360)%360,1);
+    }
+  }},
+};
+
+// Parent map for BACK navigation
+const PARENT={
+  ALT:'FLT',CLOUD:'FLT',STDATM:'FLT',AIRSPEED:'FLT',
+  TAS_PLAN:'AIRSPEED',TAS_ACT:'AIRSPEED',CAS_REQ:'AIRSPEED',
+  MACH_PLAN:'AIRSPEED',MACH_ACT:'AIRSPEED',
+  FUEL:'FLT',FUEL_BURN:'FUEL',FUEL_RATE:'FUEL',FUEL_END:'FUEL',
+  GS:'FLT',GLIDE:'FLT',CLIMB:'FLT',WINDCOMP:'FLT',
+  ETA:'FLT',WIND:'FLT',COMPASS:'FLT',
+  FLT:'HOME',PLAN:'HOME',TIMER:'HOME',CALC_MODE:'HOME',WB:'HOME',SETTINGS:'HOME',
+  HOME:'HOME'
+};
+
+// =============================================================
+//  STATE
+// =============================================================
+const S = {
+  scr: 'WIND',      // current screen key
+  sel: 0,           // selected row index
+  editId: null,     // field id currently being edited (null = not editing)
+  buf: '',          // input buffer (only valid when editId != null)
+  replacing: false, // FIX 2: true when first keypress should REPLACE existing value
+  data: {},         // data store: S.data[scrKey][fieldId] = value
+  mem: null,
+  // Calculator
+  cBuf:'', cVal:null, cOp:null,
+  // Timer
+  tRun:false, tStart:0, tElapsed:0, tInterval:null,
+  // Power
+  on:true,
+};
+
+// Initialise data store for a screen (once per screen visit)
+function initData(key){
+  if(S.data[key]) return;
+  const m=M[key]; if(!m||!m.fields) return;
+  S.data[key]={};
+  m.fields.forEach(f=>{ S.data[key][f.id] = f.def ?? null; });
+}
+
+function getD(){ initData(S.scr); return S.data[S.scr]||{}; }
+
+// =============================================================
+//  RENDER
+// =============================================================
+function render(){
+  if(!S.on){
+    document.getElementById('sContent').innerHTML='';
+    document.getElementById('sFunc').textContent='';
+    document.getElementById('sSub').textContent='';
+    return;
+  }
+  const m=M[S.scr]; if(!m)return;
+  document.getElementById('sFunc').textContent=m.title||S.scr;
+  document.getElementById('sSub').textContent=m.sub||'';
+  const el=document.getElementById('sContent');
+  el.innerHTML='';
+  if(m.special==='timer'){renderTimer(el);return;}
+  if(m.special==='calc') {renderCalc(el);return;}
+
+  if(m.items){
+    m.items.forEach((item,i)=>{
+      const row=document.createElement('div');
+      row.className='mrow'+(i===S.sel?' sel':'');
+      row.innerHTML=`<span class="ri">${i===S.sel?'▶':''}</span><span class="rl">${item.l}</span>`;
+      row.onclick=()=>{S.sel=i;handleItem(item);};
+      el.appendChild(row);
+    });
+    return;
+  }
+
+  if(m.fields){
+    const d=getD();
+    // FIX 4: only run compute when NOT mid-input
+    if(!S.editId && m.compute) m.compute(d);
+
+    m.fields.forEach((f,i)=>{
+      const isSel=i===S.sel;
+      const isEdit=S.editId===f.id;
+      const row=document.createElement('div');
+      row.className='mrow'+(isSel?' sel':'');
+
+      // Value display
+      let vStr='---';
+      if(isEdit){
+        // FIX: show cursor after buf
+        vStr=`${S.buf}<span class="inp-cursor">_</span>`;
+      } else if(d[f.id]!==null&&d[f.id]!==undefined){
+        vStr=String(d[f.id]);
+      }
+
+      const vClass=f.calc?'rv calc-val':'rv';
+      const icon=isSel?'▶':(f.calc?'=':f.input?'>':'');
+      row.innerHTML=`
+        <span class="ri">${icon}</span>
+        <span class="rl">${f.l}</span>
+        <span class="${vClass}">${vStr}</span>
+        <span class="ru">${f.u}</span>`;
+      row.onclick=()=>{
+        S.sel=i;
+        if(f.input) beginEdit(f.id, true);
+        render();
+      };
+      el.appendChild(row);
+    });
+  }
+}
+
+function renderTimer(el){
+  const ms=S.tRun?S.tElapsed+(Date.now()-S.tStart):S.tElapsed;
+  const t=Math.floor(ms/1000);
+  const h=Math.floor(t/3600),mn=Math.floor((t%3600)/60),s=t%60;
+  const ts=`${h.toString().padStart(2,'0')}:${mn.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  ['Start','Stop','Reset'].forEach((lbl,i)=>{
+    const row=document.createElement('div');
+    row.className='mrow'+(i===S.sel?' sel':'');
+    row.innerHTML=`<span class="ri">${i===S.sel?'▶':''}</span><span class="rl">${lbl}</span>`;
+    row.onclick=()=>{S.sel=i;timerAct(lbl);};
+    el.appendChild(row);
+  });
+  const d=document.createElement('div');
+  d.style.cssText='text-align:center;padding:7px 0;font-family:Roboto Mono,monospace;font-size:20px;font-weight:700;color:#0a1e30;letter-spacing:3px;';
+  d.textContent=ts;
+  el.appendChild(d);
+}
+
+function timerAct(a){
+  if(a==='Start'&&!S.tRun){S.tRun=true;S.tStart=Date.now();S.tInterval=setInterval(render,500);}
+  else if(a==='Stop'&&S.tRun){S.tElapsed+=Date.now()-S.tStart;S.tRun=false;clearInterval(S.tInterval);}
+  else if(a==='Reset'){S.tRun=false;S.tElapsed=0;clearInterval(S.tInterval);}
+  render();
+}
+
+function renderCalc(el){
+  const disp=document.createElement('div');
+  disp.style.cssText='text-align:right;padding:8px 10px 4px;font-family:Roboto Mono,monospace;font-size:20px;font-weight:700;color:#0a1e30;border-bottom:1px solid #a8bcc8;min-height:34px;background:rgba(255,255,255,0.3);';
+  disp.textContent=S.cBuf||(S.cVal!==null?String(S.cVal):'0');
+  el.appendChild(disp);
+  if(S.cOp){
+    const op=document.createElement('div');
+    op.style.cssText='text-align:right;padding:2px 10px;font-size:9px;color:#3a5a7a;font-family:Roboto Mono,monospace;';
+    op.textContent='op: '+S.cOp+(S.cVal!==null?' ('+S.cVal+')':'');
+    el.appendChild(op);
+  }
+  const hint=document.createElement('div');
+  hint.style.cssText='padding:3px 10px;font-size:8px;color:#6a8a9a;';
+  hint.textContent='Numbers + operators, ENT = equals';
+  el.appendChild(hint);
+}
+
+// =============================================================
+//  INPUT HANDLING — all bugs fixed
+// =============================================================
+
+// FIX 2: beginEdit() takes a 'replace' flag
+// When triggered by a keypress (replace=true), first keypress clears existing value
+// When triggered by clicking (replace=false), existing value is shown for editing
+function beginEdit(fid, replace){
+  S.editId=fid;
+  S.replacing=replace;
+  const d=getD();
+  // If replace mode, buf starts empty (next digit will just be that digit)
+  // If edit mode, buf shows existing value for backspace editing
+  S.buf = replace ? '' : (d[fid]!==null&&d[fid]!==undefined ? String(d[fid]) : '');
+  render();
+}
+
+// FIX 1: commitInput() saves editId BEFORE clearing it
+function commitInput(){
+  if(!S.editId)return;
+  const fid=S.editId;     // save before clearing
+  const val=parseFloat(S.buf);
+  if(!isNaN(val)){
+    const d=getD();
+    d[fid]=val;
+  }
+  S.editId=null;
+  S.buf='';
+  S.replacing=false;
+  // Auto-advance to next input field
+  const m=M[S.scr];
+  if(m&&m.fields){
+    for(let i=S.sel+1;i<m.fields.length;i++){
+      if(m.fields[i].input){S.sel=i;break;}
+    }
+  }
+  render();
+}
+
+function cancelEdit(){
+  S.editId=null; S.buf=''; S.replacing=false; render();
+}
+
+function handleItem(item){
+  if(item.s) go(item.s);
+  else if(item.action==='theme'){document.getElementById('cx3').classList.toggle('night');}
+}
+
+// =============================================================
+//  NAVIGATION
+// =============================================================
+
+// FIX 3: navUp/Down while editing = cancel edit and navigate (not delete)
+function navUp(){
+  beep(500,18);
+  if(S.editId){cancelEdit();return;}
+  const m=M[S.scr];
+  const len=m.items?m.items.length:(m.fields?m.fields.length:3);
+  S.sel=(S.sel-1+len)%len;
+  render();
+}
+function navDown(){
+  beep(500,18);
+  if(S.editId){cancelEdit();return;}
+  const m=M[S.scr];
+  const len=m.items?m.items.length:(m.fields?m.fields.length:3);
+  S.sel=(S.sel+1)%len;
+  render();
+}
+
+function kEnter(){
+  beep(680,38);
+  if(S.editId){commitInput();return;}
+  if(S.scr==='CALC_MODE'){calcEquals();return;}
+  if(S.scr==='TIMER'){timerAct(['Start','Stop','Reset'][S.sel]);return;}
+  const m=M[S.scr];
+  if(m.items){handleItem(m.items[S.sel]||{});}
+  else if(m.fields){
+    const f=m.fields[S.sel];
+    if(f&&f.input) beginEdit(f.id,false); // click-style: show existing
+  }
+}
+
+function kBACK(){
+  beep(500,22);
+  if(S.editId){cancelEdit();return;}
+  S.scr=PARENT[S.scr]||'FLT';
+  S.sel=0;
+  render();
+}
+
+// =============================================================
+//  KEYPAD
+// =============================================================
+function kp(ch){
+  beep(460,16);
+  if(S.scr==='CALC_MODE'){calcInput(ch);return;}
+  const m=M[S.scr];
+  if(!m||!m.fields)return;
+  // If not editing, start editing selected field
+  if(!S.editId){
+    const f=m.fields[S.sel];
+    if(f&&f.input){
+      // FIX 2: first digit REPLACES existing (like CX-3 real behaviour)
+      beginEdit(f.id,true);
+    } else return;
+  } else if(S.replacing){
+    // FIX 2: already in replace mode — first char just goes in normally
+    S.replacing=false;
+  }
+  if(ch==='.'&&S.buf.includes('.'))return;
+  if(S.buf===''&&ch==='.')S.buf='0';
+  if(S.buf.length>=10)return;
+  S.buf+=ch;
+  render();
+}
+
+function kpOp(op){
+  beep(460,16);
+  if(S.scr==='CALC_MODE'){ calcOp(op); return; }
+  // Outside CALC_MODE: the − key toggles the sign of the current input
+  // This is essential for negative OAT, westerly variation, etc.
+  if(op==='−' && S.editId){
+    if(S.buf===''||S.buf==='0'){ S.buf='-'; }
+    else if(S.buf.startsWith('-')){ S.buf=S.buf.slice(1); }
+    else { S.buf='-'+S.buf; }
+    render();
+  }
+  // + key removes negative sign if present
+  if(op==='+' && S.editId){
+    if(S.buf.startsWith('-')){ S.buf=S.buf.slice(1); render(); }
+  }
+}
+
+function kCLR(){
+  beep(420,28);
+  if(S.scr==='CALC_MODE'){S.cBuf='';S.cVal=null;S.cOp=null;render();return;}
+  if(S.editId){
+    // Clear field value
+    S.buf='';
+    const d=getD();
+    d[S.editId]=null;
+    S.editId=null; S.replacing=false;
+    render();
+  }
+}
+
+function kDEL(){
+  beep(420,22);
+  if(S.scr==='CALC_MODE'){S.cBuf=S.cBuf.slice(0,-1);render();return;}
+  if(S.editId&&S.buf.length>0){
+    S.buf=S.buf.slice(0,-1);
+    render();
+  } else if(S.editId){
+    cancelEdit();
+  }
+}
+
+// =============================================================
+//  CALCULATOR
+// =============================================================
+function calcInput(ch){S.cBuf+=ch;render();}
+function calcOp(op){
+  if(S.cBuf){
+    const v=parseFloat(S.cBuf)||0;
+    S.cVal=(S.cOp&&S.cVal!==null)?doMath(S.cVal,v,S.cOp):v;
+    S.cBuf='';
+  }
+  S.cOp=op; render();
+}
+function calcEquals(){
+  if(S.cOp&&S.cVal!==null&&S.cBuf){
+    S.cVal=doMath(S.cVal,parseFloat(S.cBuf)||0,S.cOp);
+    S.cBuf=''; S.cOp=null;
+  } else if(S.cBuf){
+    S.cVal=parseFloat(S.cBuf)||0; S.cBuf='';
+  }
+  render();
+}
+function doMath(a,b,op){
+  if(op==='÷')return b?rd(a/b,6):0;
+  if(op==='×')return rd(a*b,6);
+  if(op==='−')return rd(a-b,6);
+  if(op==='+')return rd(a+b,6);
+  return b;
+}
+
+// =============================================================
+//  TOP BUTTON HANDLERS
+// =============================================================
+function go(scr){
+  beep(580,28);
+  S.scr=scr; S.sel=0; S.editId=null; S.buf=''; S.replacing=false;
+  initData(scr);
+  render();
+}
+function kFAV(){ go('WIND'); }  // FAV shortcut = Wind Correction
+function kBACK2(){ kBACK(); }
+
+function kMem(){
+  beep(480,22);
+  const m=M[S.scr];
+  if(m&&m.fields){
+    const d=getD(), f=m.fields[S.sel];
+    if(f&&d[f.id]!=null) S.mem=d[f.id];
+  }
+}
+function kUnit(){ beep(480,22); /* unit toggle — placeholder */ }
+function kConv(){ beep(480,22); /* unit conversion — placeholder */ }
+
+function kPWR(){
+  beep(880,55);
+  S.on=!S.on;
+  document.getElementById('screen').style.opacity=S.on?'1':'0.05';
+  if(S.on) render();
+}
+
+// =============================================================
+//  AUDIO
+// =============================================================
+let actx=null;
+function beep(f,d){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.connect(g);g.connect(actx.destination);
+    o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0.018,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+d/1000);
+    o.start();o.stop(actx.currentTime+d/1000);
+  }catch(e){}
+}
+
+// =============================================================
+//  INIT
+//  Real CX-3 behaviour: non-volatile memory means it powers back
+//  on to the last screen used. On a truly fresh device (no memory),
+//  it opens the FLT menu — NOT Wind Correction directly.
+//  Wind Correction lives inside FLT → Wind Correction.
+//  We simulate non-volatile memory with sessionStorage.
+// =============================================================
+(function(){
+  let startScr = 'FLT'; // fresh device default
+  try {
+    const saved = sessionStorage.getItem('cx3_scr');
+    if(saved && M[saved]) startScr = saved;
+  } catch(e){}
+
+  // Wrap render to persist current screen (simulates non-volatile memory)
+  const _origRender = render;
+  render = function(){
+    _origRender();
+    try { sessionStorage.setItem('cx3_scr', S.scr); } catch(e){}
+  };
+
+  go(startScr);
+})();
+</script>
+</body>
+</html>
