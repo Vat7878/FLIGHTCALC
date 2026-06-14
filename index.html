@@ -6623,7 +6623,7 @@ To save his stricken allies, Subaru fac…</div>
                 const url = PROVIDERS[state.provider].url(state.malId, ep, state.lang);
 
                 // FIX: allow="autoplay; fullscreen" add kiya gaya hai
-                document.getElementById('player-wrap').innerHTML = `<iframe src="${url}" sandbox="allow-scripts allow-same-origin allow-fullscreen" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+                document.getElementById('player-wrap').innerHTML = `<iframe src="${url}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
 
                 const h = Store.get('otaku_hist');
                 const eps = h[state.malId]?.eps || [];
