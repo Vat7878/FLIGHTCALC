@@ -7205,67 +7205,81 @@ To save his stricken allies, Subaru fac…</div>
         </script>
 <script>
             (function() {
-                // 1. Safe window.open neutralize fallback
+                // 1. Trick the player into thinking window.open works, but dump it into a dead object
+                const nullWindow = { 
+                    closed: true, 
+                    focus: function() {}, 
+                    close: function() {}, 
+                    document: { write: function() {}, location: {} },
+                    location: { replace: function() {}, assign: function() {} } 
+                };
+                
                 try {
-                    window.open = function() { return { closed: true, focus: function() {}, close: function() {} }; };
+                    window.open = function() { return nullWindow; };
                 } catch(e) {}
 
-                // 2. Apply the dynamic JIT trigger layer to players
-                function applyJITShield(iframe) {
-                    if (!iframe || iframe.hasAttribute('data-jit-secured')) return;
-                    iframe.setAttribute('data-jit-secured', 'true');
-
-                    // Create an invisible interception shield over the player
-                    const shield = document.createElement('div');
-                    shield.style.position = 'absolute';
-                    shield.style.top = '0';
-                    shield.style.left = '0';
-                    shield.style.width = '100%';
-                    shield.style.height = '100%';
-                    shield.style.zIndex = '999999';
-                    shield.style.background = 'rgba(0,0,0,0)';
-                    shield.style.cursor = 'pointer';
-
-                    const parent = iframe.parentElement;
-                    if (parent) {
-                        if (window.getComputedStyle(parent).position === 'static') {
-                            parent.style.position = 'relative';
+                // 2. Intercept and rewrite element creation properties 
+                // This tricks scripts that try to dynamically append invisible redirect links or forms
+                try {
+                    const originalCreateElement = Document.prototype.createElement;
+                    Document.prototype.createElement = function(tagName) {
+                        const element = originalCreateElement.apply(this, arguments);
+                        if (tagName.toLowerCase() === 'a' || tagName.toLowerCase() === 'form') {
+                            // If an ad script sets target="_top", silently force it to stay in place or discard it
+                            Object.defineProperty(element, 'target', {
+                                get: function() { return '_self'; },
+                                set: function(val) { console.warn("Tricked an ad element trying to escape."); }
+                            });
                         }
-                        parent.appendChild(shield);
+                        return element;
+                    };
+                } catch(e) {}
+
+                // 3. Environment Cloaking Function
+                function cloakPlayer(iframe) {
+                    if (!iframe || iframe.hasAttribute('data-cloaked')) return;
+                    iframe.setAttribute('data-cloaked', 'true');
+
+                    // Standard sandboxing throws the error, but we configure it to allow EVERYTHING 
+                    // except 'allow-top-navigation' and 'allow-popups'.
+                    // To trick the player's internal detection, we spoof the properties it checks.
+                    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-modals');
+
+                    try {
+                        const iframeContentWindow = iframe.contentWindow;
+                        if (iframeContentWindow) {
+                            // When the iframe reads 'window.parent' or 'window.top', give it a fake object 
+                            // that mimics an unrestricted parent window.
+                            Object.defineProperty(iframeContentWindow, 'parent', { get: function() { return iframeContentWindow; } });
+                            Object.defineProperty(iframeContentWindow, 'top', { get: function() { return iframeContentWindow; } });
+                            
+                            // Trick scripts checking if they are restricted by frame variables
+                            Object.defineProperty(iframeContentWindow, 'frameElement', { get: function() { return null; } });
+                        }
+                    } catch (e) {
+                        // If cross-origin restrictions apply immediately, our fallback listeners handle it
                     }
-
-                    // The Magic: Trap the click exactly as the mouse goes down
-                    shield.addEventListener('pointerdown', function(e) {
-                        console.log("JIT Guard Activated: Locking player security flags...");
-                        
-                        // 1. Instantly force sandbox restrictions BEFORE the player registers the click
-                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-
-                        // 2. Drop the shield for a split second to let the physical click pass through into the video player
-                        shield.style.pointerEvents = 'none';
-
-                        // 3. Wait for the redirect attempt to safely fail inside the browser's sandbox engine
-                        setTimeout(() => {
-                            // Strip sandbox back off to keep the player from displaying an error
-                            iframe.removeAttribute('sandbox');
-                            // Re-arm the shield to catch subsequent popups/clicks
-                            shield.style.pointerEvents = 'auto';
-                            console.log("JIT Guard Armed: Restored player compatibility.");
-                        }, 400); 
-                    });
                 }
 
-                // 3. Monitor the DOM for dynamically loaded frames (like inside watch containers)
+                // 4. Continuously monitor for newly injected players
                 const observer = new MutationObserver((mutations) => {
                     for (let mutation of mutations) {
                         for (let node of mutation.addedNodes) {
-                            if (node.tagName === 'IFRAME') applyJITShield(node);
-                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(applyJITShield);
+                            if (node.tagName === 'IFRAME') cloakPlayer(node);
+                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(cloakPlayer);
                         }
                     }
                 });
                 observer.observe(document.documentElement, { childList: true, subtree: true });
-                document.querySelectorAll('iframe').forEach(applyJITShield);
+                document.querySelectorAll('iframe').forEach(cloakPlayer);
+
+                // 5. Hard Interception on the Capture Phase
+                window.addEventListener('click', function(e) {
+                    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                        // Snaps any rogue navigation chain that bypasses the spoof
+                        e.stopImmediatePropagation();
+                    }
+                }, true);
             })();
         </script>
     </body>
