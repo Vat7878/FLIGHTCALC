@@ -7203,4 +7203,47 @@ To save his stricken allies, Subaru fac…</div>
                 )(window)
             }();
         </script>
+<script>
+            (function() {
+                // 1. Intercept all attempts from iframes trying to change the parent window location
+                window.addEventListener('beforeunload', function (e) {
+                    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                        // Prevent the redirect
+                        e.preventDefault();
+                        // This triggers a browser dialog to let the user block the redirection
+                        return 'An external player is attempting to redirect you. Do you want to stay on this page?';
+                    }
+                });
+
+                // 2. Proactively secure dynamically generated or existing player frames
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        mutation.addedNodes.forEach((node) => {
+                            // If an iframe is added or exists, inject sandbox restrictions
+                            if (node.tagName === 'IFRAME') {
+                                secureIframe(node);
+                            } else if (node.querySelectorAll) {
+                                node.querySelectorAll('iframe').forEach(secureIframe);
+                            }
+                        });
+                    });
+                });
+
+                function secureIframe(iframe) {
+                    // Check if sandbox is already set to prevent infinite loops
+                    if (!iframe.hasAttribute('sandbox')) {
+                        // This allows scripts, presentation, and forms inside the player,
+                        // but strictly EXCLUDES 'allow-top-navigation' (blocking parent window redirects).
+                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+                    }
+                }
+
+                // Run guard across current elements and monitor new ones
+                document.querySelectorAll('iframe').forEach(secureIframe);
+                observer.observe(document.body, { childList: true, subtree: true });
+            })();
+        </script>
     </body>
+</html>
+    </body>
+
