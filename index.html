@@ -7205,68 +7205,65 @@ To save his stricken allies, Subaru fac…</div>
         </script>
 <script>
             (function() {
-                // 1. Freeze window object properties to prevent location hijacking
+                // 1. Completely break window.open so the player can't spawn new popups/tabs
                 try {
-                    const preventHijack = () => {
-                        // Intercept any attempts by external code to open popups or tabs
-                        const originalOpen = window.open;
-                        window.open = function(url, name, specs, replace) {
-                            console.warn("Blocked popup attempt:", url);
-                            return { closed: true, focus: function() {}, close: function() {} }; 
-                        };
+                    const originalOpen = window.open;
+                    window.open = function(url, name, specs, replace) {
+                        console.warn("Blocked video player popup attempt:", url);
+                        // Return a spoofed window context so the ad script thinks it succeeded
+                        return { closed: true, focus: function() {}, close: function() {} }; 
                     };
-                    preventHijack();
                 } catch(e) {}
 
-                // 2. Strict Iframe Sandbox Mutation Observer
-                const enforceSandbox = (iframe) => {
-                    if (iframe && !iframe.hasAttribute('data-secured')) {
-                        // FORCE clear any top navigation and popup permissions
-                        // Omitting: 'allow-top-navigation', 'allow-top-navigation-by-user-activation', and 'allow-popups'
-                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-                        iframe.setAttribute('data-secured', 'true');
+                // 2. Clear out any previous sandbox parameters so the player doesn't throw the "oops sandboxed" error
+                const allowPlayerRun = (iframe) => {
+                    if (iframe && iframe.hasAttribute('sandbox')) {
+                        iframe.removeAttribute('sandbox');
                     }
                 };
-
                 const observer = new MutationObserver((mutations) => {
                     for (let mutation of mutations) {
                         for (let node of mutation.addedNodes) {
-                            if (node.tagName === 'IFRAME') enforceSandbox(node);
-                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(enforceSandbox);
+                            if (node.tagName === 'IFRAME') allowPlayerRun(node);
+                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(allowPlayerRun);
                         }
                     }
                 });
                 observer.observe(document.documentElement, { childList: true, subtree: true });
-                document.querySelectorAll('iframe').forEach(enforceSandbox);
+                document.querySelectorAll('iframe').forEach(allowPlayerRun);
 
-                // 3. Capture Phase Event Interception (Stops ad click listeners before they execute)
+                // 3. Hijack the global Window Unload Event (Stops address bar modification)
+                let unhooked = false;
+                window.addEventListener('beforeunload', function (e) {
+                    // Inspect if the active focused element causing the page to close is the player iframe
+                    if (!unhooked && document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                        e.preventDefault();
+                        
+                        // Standard modern browser specification to halt execution
+                        e.returnValue = 'Prevented third party redirect.';
+                        
+                        // Fallback option for alternative browsers
+                        return 'Prevented third party redirect.';
+                    }
+                });
+
+                // 4. Intercept the Capture Phase Click bubble
                 window.addEventListener('click', function(event) {
-                    // Trace back where the click originated
                     const path = event.composedPath() || [];
-                    let insideIframe = false;
+                    let targetIsIframe = false;
                     
                     for (let element of path) {
-                        if (element.tagName === 'IFRAME' || (element.classList && element.classList.contains('watch-view-container'))) {
-                            insideIframe = true;
+                        if (element.tagName === 'IFRAME') {
+                            targetIsIframe = true;
                             break;
                         }
                     }
 
-                    // If a click happened anywhere near the player, stop malicious bubbling propagation
-                    if (insideIframe || document.activeElement.tagName === 'IFRAME') {
-                        // Stop other scripts from hearing this click and initiating a redirect
-                        event.stopPropagation(); 
+                    if (targetIsIframe || document.activeElement.tagName === 'IFRAME') {
+                        // Prevent click propagation from leaving the frame boundary up to window.top
+                        event.stopPropagation();
                     }
-                }, true); // 'true' sets it to the Capture Phase (runs before the ad script can touch it)
-
-                // 4. Heavyweight Top-Window Lockout
-                window.addEventListener('beforeunload', function (e) {
-                    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                        e.preventDefault();
-                        e.returnValue = 'Prevented page hijack.';
-                        return 'Prevented page hijack.';
-                    }
-                });
+                }, true); // True runs this block during the capture cycle, before the player ad script can register it.
             })();
         </script>
     </body>
