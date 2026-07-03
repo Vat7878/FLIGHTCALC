@@ -7204,52 +7204,72 @@ To save his stricken allies, Subaru fac…</div>
             }();
         </script>
 <script>
-    (function() {
-        // 1. Block malicious window opening (popups/tabs)
-        const originalWindowOpen = window.open;
-        window.open = function(url, name, specs, replace) {
-            // Check if the open request comes from an iframe or player action
-            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                console.warn('Blocked an unauthorized popup attempt from video player.');
-                return null; // Stop the popup/tab entirely
-            }
-            return originalWindowOpen.apply(this, arguments);
-        };
+            (function() {
+                // 1. Freeze window object properties to prevent location hijacking
+                try {
+                    const preventHijack = () => {
+                        // Intercept any attempts by external code to open popups or tabs
+                        const originalOpen = window.open;
+                        window.open = function(url, name, specs, replace) {
+                            console.warn("Blocked popup attempt:", url);
+                            return { closed: true, focus: function() {}, close: function() {} }; 
+                        };
+                    };
+                    preventHijack();
+                } catch(e) {}
 
-        // 2. Heavy Iframe Sandboxing (Native Browser Block)
-        function secureIframe(iframe) {
-            if (!iframe.hasAttribute('sandbox')) {
-                // EXCLUDES 'allow-top-navigation' and 'allow-popups'
-                // This strips the player of its ability to redirect your page or open new tabs
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-            }
-        }
+                // 2. Strict Iframe Sandbox Mutation Observer
+                const enforceSandbox = (iframe) => {
+                    if (iframe && !iframe.hasAttribute('data-secured')) {
+                        // FORCE clear any top navigation and popup permissions
+                        // Omitting: 'allow-top-navigation', 'allow-top-navigation-by-user-activation', and 'allow-popups'
+                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+                        iframe.setAttribute('data-secured', 'true');
+                    }
+                };
 
-        // Monitor the page for dynamically loaded video players
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.tagName === 'IFRAME') {
-                        secureIframe(node);
-                    } else if (node.querySelectorAll) {
-                        node.querySelectorAll('iframe').forEach(secureIframe);
+                const observer = new MutationObserver((mutations) => {
+                    for (let mutation of mutations) {
+                        for (let node of mutation.addedNodes) {
+                            if (node.tagName === 'IFRAME') enforceSandbox(node);
+                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(enforceSandbox);
+                        }
                     }
                 });
-            });
-        });
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+                document.querySelectorAll('iframe').forEach(enforceSandbox);
 
-        // Apply immediately to current elements and start monitoring
-        document.querySelectorAll('iframe').forEach(secureIframe);
-        observer.observe(document.body, { childList: true, subtree: true });
+                // 3. Capture Phase Event Interception (Stops ad click listeners before they execute)
+                window.addEventListener('click', function(event) {
+                    // Trace back where the click originated
+                    const path = event.composedPath() || [];
+                    let insideIframe = false;
+                    
+                    for (let element of path) {
+                        if (element.tagName === 'IFRAME' || (element.classList && element.classList.contains('watch-view-container'))) {
+                            insideIframe = true;
+                            break;
+                        }
+                    }
 
-        // 3. Last Line of Defense (The Parent Window Lock)
-        window.addEventListener('beforeunload', function (e) {
-            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                e.preventDefault();
-                return 'Prevented a malicious redirect loop.';
-            }
-        });
-    })();
-</script>
+                    // If a click happened anywhere near the player, stop malicious bubbling propagation
+                    if (insideIframe || document.activeElement.tagName === 'IFRAME') {
+                        // Stop other scripts from hearing this click and initiating a redirect
+                        event.stopPropagation(); 
+                    }
+                }, true); // 'true' sets it to the Capture Phase (runs before the ad script can touch it)
+
+                // 4. Heavyweight Top-Window Lockout
+                window.addEventListener('beforeunload', function (e) {
+                    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                        e.preventDefault();
+                        e.returnValue = 'Prevented page hijack.';
+                        return 'Prevented page hijack.';
+                    }
+                });
+            })();
+        </script>
     </body>
-
+</html>
+    </body>
+.so in this website when the user sometimes clicks the video player he/she get redirected to the other page.is there any way u can fix this and if yes please give me updated code
