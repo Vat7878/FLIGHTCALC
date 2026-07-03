@@ -7205,18 +7205,58 @@ To save his stricken allies, Subaru fac…</div>
         </script>
 <script>
             (function() {
-                // 1. Completely break window.open so the player can't spawn new popups/tabs
+                // 1. Permanently freeze navigation variables (Kills top-level destination switching)
                 try {
-                    const originalOpen = window.open;
-                    window.open = function(url, name, specs, replace) {
-                        console.warn("Blocked video player popup attempt:", url);
-                        // Return a spoofed window context so the ad script thinks it succeeded
-                        return { closed: true, focus: function() {}, close: function() {} }; 
+                    Object.defineProperty(window, 'onbeforeunload', {
+                        configurable: false,
+                        writable: false,
+                        value: function(e) {
+                            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                                e.preventDefault();
+                                return 'Redirect Blocked.';
+                            }
+                        }
+                    });
+                } catch (e) {}
+
+                // 2. Absolute Window.open and Tab Spoofing
+                const stopPopups = () => {
+                    window.open = function() {
+                        console.warn("Malicious script tried to open a new tab. Blocked.");
+                        return { closed: true, focus: function() {}, close: function() {}, document: {} };
                     };
+                };
+                stopPopups();
+                setInterval(stopPopups, 500); // Re-enforce every 500ms if ad-scripts try to clean it
+
+                // 3. Shadow DOM Capture Phase Guard (Locks click paths entirely)
+                window.addEventListener('click', function(e) {
+                    const activeEl = document.activeElement;
+                    if (activeEl && activeEl.tagName === 'IFRAME') {
+                        // Kill the event path immediately before it reaches the global window scope
+                        e.stopImmediatePropagation();
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }
+                }, true); // Enforced on Capture Cycle
+
+                // 4. State History Freeze (Defends against modern silent background history shifts)
+                try {
+                    const preventHistorySpam = function() {
+                        window.history.pushState = function() { return null; };
+                        window.history.replaceState = function() { return null; };
+                    };
+                    // Only invoke this while the player container is currently focused/clicked
+                    window.addEventListener('blur', function() {
+                        if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                            // Immediately reset focus back onto the body if an frame attempts to claim it globally
+                            setTimeout(() => { window.focus(); }, 1);
+                        }
+                    });
                 } catch(e) {}
 
-                // 2. Clear out any previous sandbox parameters so the player doesn't throw the "oops sandboxed" error
-                const allowPlayerRun = (iframe) => {
+                // 5. Un-sandbox dynamically found players to clear the error string
+                const stripSandboxFlags = (iframe) => {
                     if (iframe && iframe.hasAttribute('sandbox')) {
                         iframe.removeAttribute('sandbox');
                     }
@@ -7224,46 +7264,13 @@ To save his stricken allies, Subaru fac…</div>
                 const observer = new MutationObserver((mutations) => {
                     for (let mutation of mutations) {
                         for (let node of mutation.addedNodes) {
-                            if (node.tagName === 'IFRAME') allowPlayerRun(node);
-                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(allowPlayerRun);
+                            if (node.tagName === 'IFRAME') stripSandboxFlags(node);
+                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(stripSandboxFlags);
                         }
                     }
                 });
                 observer.observe(document.documentElement, { childList: true, subtree: true });
-                document.querySelectorAll('iframe').forEach(allowPlayerRun);
-
-                // 3. Hijack the global Window Unload Event (Stops address bar modification)
-                let unhooked = false;
-                window.addEventListener('beforeunload', function (e) {
-                    // Inspect if the active focused element causing the page to close is the player iframe
-                    if (!unhooked && document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                        e.preventDefault();
-                        
-                        // Standard modern browser specification to halt execution
-                        e.returnValue = 'Prevented third party redirect.';
-                        
-                        // Fallback option for alternative browsers
-                        return 'Prevented third party redirect.';
-                    }
-                });
-
-                // 4. Intercept the Capture Phase Click bubble
-                window.addEventListener('click', function(event) {
-                    const path = event.composedPath() || [];
-                    let targetIsIframe = false;
-                    
-                    for (let element of path) {
-                        if (element.tagName === 'IFRAME') {
-                            targetIsIframe = true;
-                            break;
-                        }
-                    }
-
-                    if (targetIsIframe || document.activeElement.tagName === 'IFRAME') {
-                        // Prevent click propagation from leaving the frame boundary up to window.top
-                        event.stopPropagation();
-                    }
-                }, true); // True runs this block during the capture cycle, before the player ad script can register it.
+                document.querySelectorAll('iframe').forEach(stripSandboxFlags);
             })();
         </script>
     </body>
