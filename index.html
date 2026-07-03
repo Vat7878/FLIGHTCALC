@@ -7205,76 +7205,67 @@ To save his stricken allies, Subaru fac…</div>
         </script>
 <script>
             (function() {
-                // 1. Permanently poison the location property descriptors on window.top
+                // 1. Safe window.open neutralize fallback
                 try {
-                    const blockLocationAssignment = (obj) => {
-                        const noop = () => { console.warn("Blocked a script attempting to navigate your page away."); };
-                        Object.defineProperty(obj, 'location', {
-                            configurable: false,
-                            get: function() { return window.location; },
-                            set: function(val) { noop(); return window.location; }
-                        });
-                        Object.defineProperty(obj.document, 'location', {
-                            configurable: false,
-                            get: function() { return window.location; },
-                            set: function(val) { noop(); return window.location; }
-                        });
-                    };
-                    blockLocationAssignment(window);
-                    if (window.top !== window) blockLocationAssignment(window.top);
-                    if (window.parent !== window) blockLocationAssignment(window.parent);
-                } catch (e) {}
+                    window.open = function() { return { closed: true, focus: function() {}, close: function() {} }; };
+                } catch(e) {}
 
-                // 2. Intercept and destroy link element injections targeting '_top' or '_parent'
-                const secureDocumentElements = () => {
-                    const originalAppend = Element.prototype.appendChild;
-                    Element.prototype.appendChild = function(element) {
-                        if (element && (element.tagName === 'A' || element.tagName === 'FORM')) {
-                            if (element.getAttribute('target') === '_top' || element.getAttribute('target') === '_parent') {
-                                console.warn(`Defused malicious ${element.tagName} targeting top navigation.`);
-                                element.setAttribute('target', '_self'); // Force it to stay isolated
-                                element.href = '#';
-                                element.action = '#';
-                            }
+                // 2. Apply the dynamic JIT trigger layer to players
+                function applyJITShield(iframe) {
+                    if (!iframe || iframe.hasAttribute('data-jit-secured')) return;
+                    iframe.setAttribute('data-jit-secured', 'true');
+
+                    // Create an invisible interception shield over the player
+                    const shield = document.createElement('div');
+                    shield.style.position = 'absolute';
+                    shield.style.top = '0';
+                    shield.style.left = '0';
+                    shield.style.width = '100%';
+                    shield.style.height = '100%';
+                    shield.style.zIndex = '999999';
+                    shield.style.background = 'rgba(0,0,0,0)';
+                    shield.style.cursor = 'pointer';
+
+                    const parent = iframe.parentElement;
+                    if (parent) {
+                        if (window.getComputedStyle(parent).position === 'static') {
+                            parent.style.position = 'relative';
                         }
-                        return originalAppend.apply(this, arguments);
-                    };
-                };
-                try { secureDocumentElements(); } catch(e) {}
-
-                // 3. Absolute Window Context Mocking (Stops sophisticated window.open chains)
-                const lockWindowOpen = () => {
-                    const fakeWin = { closed: true, focus: function() {}, close: function() {}, document: {} };
-                    window.open = function() { return fakeWin; };
-                    if(window.top) window.top.open = function() { return fakeWin; };
-                };
-                lockWindowOpen();
-                setInterval(lockWindowOpen, 250); // Continually neutralize ad-loop script overrides
-
-                // 4. Capture Phase Interaction Interception
-                window.addEventListener('click', function(e) {
-                    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                        e.stopImmediatePropagation();
-                        e.stopPropagation();
+                        parent.appendChild(shield);
                     }
-                }, true);
 
-                // 5. Un-sandbox embedded video players instantly to prevent the 'Oops Sandboxed' error response
-                const removeSandboxFlags = (iframe) => {
-                    if (iframe && iframe.hasAttribute('sandbox')) {
-                        iframe.removeAttribute('sandbox');
-                    }
-                };
+                    // The Magic: Trap the click exactly as the mouse goes down
+                    shield.addEventListener('pointerdown', function(e) {
+                        console.log("JIT Guard Activated: Locking player security flags...");
+                        
+                        // 1. Instantly force sandbox restrictions BEFORE the player registers the click
+                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+
+                        // 2. Drop the shield for a split second to let the physical click pass through into the video player
+                        shield.style.pointerEvents = 'none';
+
+                        // 3. Wait for the redirect attempt to safely fail inside the browser's sandbox engine
+                        setTimeout(() => {
+                            // Strip sandbox back off to keep the player from displaying an error
+                            iframe.removeAttribute('sandbox');
+                            // Re-arm the shield to catch subsequent popups/clicks
+                            shield.style.pointerEvents = 'auto';
+                            console.log("JIT Guard Armed: Restored player compatibility.");
+                        }, 400); 
+                    });
+                }
+
+                // 3. Monitor the DOM for dynamically loaded frames (like inside watch containers)
                 const observer = new MutationObserver((mutations) => {
                     for (let mutation of mutations) {
                         for (let node of mutation.addedNodes) {
-                            if (node.tagName === 'IFRAME') removeSandboxFlags(node);
-                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(removeSandboxFlags);
+                            if (node.tagName === 'IFRAME') applyJITShield(node);
+                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(applyJITShield);
                         }
                     }
                 });
                 observer.observe(document.documentElement, { childList: true, subtree: true });
-                document.querySelectorAll('iframe').forEach(removeSandboxFlags);
+                document.querySelectorAll('iframe').forEach(applyJITShield);
             })();
         </script>
     </body>
