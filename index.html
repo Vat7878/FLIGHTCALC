@@ -7204,46 +7204,52 @@ To save his stricken allies, Subaru fac…</div>
             }();
         </script>
 <script>
-            (function() {
-                // 1. Intercept all attempts from iframes trying to change the parent window location
-                window.addEventListener('beforeunload', function (e) {
-                    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                        // Prevent the redirect
-                        e.preventDefault();
-                        // This triggers a browser dialog to let the user block the redirection
-                        return 'An external player is attempting to redirect you. Do you want to stay on this page?';
+    (function() {
+        // 1. Block malicious window opening (popups/tabs)
+        const originalWindowOpen = window.open;
+        window.open = function(url, name, specs, replace) {
+            // Check if the open request comes from an iframe or player action
+            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                console.warn('Blocked an unauthorized popup attempt from video player.');
+                return null; // Stop the popup/tab entirely
+            }
+            return originalWindowOpen.apply(this, arguments);
+        };
+
+        // 2. Heavy Iframe Sandboxing (Native Browser Block)
+        function secureIframe(iframe) {
+            if (!iframe.hasAttribute('sandbox')) {
+                // EXCLUDES 'allow-top-navigation' and 'allow-popups'
+                // This strips the player of its ability to redirect your page or open new tabs
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+            }
+        }
+
+        // Monitor the page for dynamically loaded video players
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.tagName === 'IFRAME') {
+                        secureIframe(node);
+                    } else if (node.querySelectorAll) {
+                        node.querySelectorAll('iframe').forEach(secureIframe);
                     }
                 });
+            });
+        });
 
-                // 2. Proactively secure dynamically generated or existing player frames
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        mutation.addedNodes.forEach((node) => {
-                            // If an iframe is added or exists, inject sandbox restrictions
-                            if (node.tagName === 'IFRAME') {
-                                secureIframe(node);
-                            } else if (node.querySelectorAll) {
-                                node.querySelectorAll('iframe').forEach(secureIframe);
-                            }
-                        });
-                    });
-                });
+        // Apply immediately to current elements and start monitoring
+        document.querySelectorAll('iframe').forEach(secureIframe);
+        observer.observe(document.body, { childList: true, subtree: true });
 
-                function secureIframe(iframe) {
-                    // Check if sandbox is already set to prevent infinite loops
-                    if (!iframe.hasAttribute('sandbox')) {
-                        // This allows scripts, presentation, and forms inside the player,
-                        // but strictly EXCLUDES 'allow-top-navigation' (blocking parent window redirects).
-                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-                    }
-                }
-
-                // Run guard across current elements and monitor new ones
-                document.querySelectorAll('iframe').forEach(secureIframe);
-                observer.observe(document.body, { childList: true, subtree: true });
-            })();
-        </script>
-    </body>
-</html>
+        // 3. Last Line of Defense (The Parent Window Lock)
+        window.addEventListener('beforeunload', function (e) {
+            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                e.preventDefault();
+                return 'Prevented a malicious redirect loop.';
+            }
+        });
+    })();
+</script>
     </body>
 
