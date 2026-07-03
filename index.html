@@ -7205,72 +7205,85 @@ To save his stricken allies, Subaru fac…</div>
         </script>
 <script>
             (function() {
-                // 1. Permanently freeze navigation variables (Kills top-level destination switching)
-                try {
-                    Object.defineProperty(window, 'onbeforeunload', {
-                        configurable: false,
-                        writable: false,
-                        value: function(e) {
-                            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                                e.preventDefault();
-                                return 'Redirect Blocked.';
-                            }
-                        }
-                    });
-                } catch (e) {}
-
-                // 2. Absolute Window.open and Tab Spoofing
-                const stopPopups = () => {
-                    window.open = function() {
-                        console.warn("Malicious script tried to open a new tab. Blocked.");
-                        return { closed: true, focus: function() {}, close: function() {}, document: {} };
-                    };
-                };
-                stopPopups();
-                setInterval(stopPopups, 500); // Re-enforce every 500ms if ad-scripts try to clean it
-
-                // 3. Shadow DOM Capture Phase Guard (Locks click paths entirely)
-                window.addEventListener('click', function(e) {
-                    const activeEl = document.activeElement;
-                    if (activeEl && activeEl.tagName === 'IFRAME') {
-                        // Kill the event path immediately before it reaches the global window scope
-                        e.stopImmediatePropagation();
-                        e.stopPropagation();
-                        e.preventDefault();
-                    }
-                }, true); // Enforced on Capture Cycle
-
-                // 4. State History Freeze (Defends against modern silent background history shifts)
-                try {
-                    const preventHistorySpam = function() {
-                        window.history.pushState = function() { return null; };
-                        window.history.replaceState = function() { return null; };
-                    };
-                    // Only invoke this while the player container is currently focused/clicked
-                    window.addEventListener('blur', function() {
-                        if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-                            // Immediately reset focus back onto the body if an frame attempts to claim it globally
-                            setTimeout(() => { window.focus(); }, 1);
-                        }
-                    });
-                } catch(e) {}
-
-                // 5. Un-sandbox dynamically found players to clear the error string
-                const stripSandboxFlags = (iframe) => {
+                // 1. Force clear sandboxing parameters to keep the video engine from throwing errors
+                const removeSandboxTrigger = (iframe) => {
                     if (iframe && iframe.hasAttribute('sandbox')) {
                         iframe.removeAttribute('sandbox');
                     }
+                    setupTransparentShield(iframe);
                 };
+
+                // 2. Build an invisible overlay shield right on top of the player
+                function setupTransparentShield(iframe) {
+                    if (!iframe || iframe.hasAttribute('data-shielded')) return;
+                    iframe.setAttribute('data-shielded', 'true');
+
+                    // Create a protective glass layer
+                    const shield = document.createElement('div');
+                    shield.style.position = 'absolute';
+                    shield.style.top = '0';
+                    shield.style.left = '0';
+                    shield.style.width = '100%';
+                    shield.style.height = '100%';
+                    shield.style.zIndex = '999999';
+                    shield.style.background = 'rgba(0,0,0,0)'; // Perfectly invisible
+                    shield.style.cursor = 'pointer';
+
+                    // Ensure parent container accommodates absolute positioning
+                    const parent = iframe.parentElement;
+                    if (parent) {
+                        if (window.getComputedStyle(parent).position === 'static') {
+                            parent.style.position = 'relative';
+                        }
+                        parent.appendChild(shield);
+                    }
+
+                    // 3. Intercept user click safely and feed a safe interaction to the video
+                    shield.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+
+                        console.log("Shield intercepted a raw coordinate click. Safely interacting with player...");
+
+                        // Temporarily move the shield away, trigger video focus/play safely, and pull shield right back
+                        shield.style.pointerEvents = 'none';
+                        
+                        // Simulate a safe focus state context
+                        iframe.focus();
+                        
+                        // Re-enable the shield a fraction of a millisecond later to catch pop-unders
+                        setTimeout(() => {
+                            shield.style.pointerEvents = 'auto';
+                        }, 50);
+                    });
+                }
+
+                // 4. Continually watch for dynamically spawned video players (watch-view-container modifications)
                 const observer = new MutationObserver((mutations) => {
                     for (let mutation of mutations) {
                         for (let node of mutation.addedNodes) {
-                            if (node.tagName === 'IFRAME') stripSandboxFlags(node);
-                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(stripSandboxFlags);
+                            if (node.tagName === 'IFRAME') removeSandboxTrigger(node);
+                            else if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(removeSandboxTrigger);
                         }
                     }
                 });
                 observer.observe(document.documentElement, { childList: true, subtree: true });
-                document.querySelectorAll('iframe').forEach(stripSandboxFlags);
+                document.querySelectorAll('iframe').forEach(removeSandboxTrigger);
+
+                // 5. Hard freeze window location modifiers if the iframe attempts code-level navigation
+                try {
+                    const preventTopHijack = () => {
+                        window.onbeforeunload = function(e) {
+                            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                                e.preventDefault();
+                                return 'Redirection aborted safely.';
+                            }
+                        };
+                    };
+                    preventTopHijack();
+                    window.open = function() { return { closed: true }; };
+                } catch(err) {}
             })();
         </script>
     </body>
