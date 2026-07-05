@@ -150,79 +150,6 @@
                 --glow: rgba(230,57,80,0.22);
                 --r: 11px;
                 --rl: 16px;
-                --tooltip-bg: rgba(14, 14, 28, 0.85);
-                --tooltip-text: #fff;
-                --ambient-brightness: 0.15;
-            }
-
-            /* --- LIGHT THEME (soft, warm, easy on the eyes) --- */
-            body.light-theme {
-                --bg: #f6f4ef;
-                --surface: #ffffff;
-                --card: #ffffff;
-                --card2: #f0eee7;
-                --border: rgba(30,25,15,0.08);
-                --border2: rgba(30,25,15,0.14);
-                --accent: #d6304a;
-                --accent2: #e8622f;
-                --purple: #6a3fd8;
-                --text: #262420;
-                --muted: #cfc9bb;
-                --muted2: #6b6558;
-                --glow: rgba(214,48,74,0.16);
-                --tooltip-bg: rgba(255,255,255,0.96);
-                --tooltip-text: #262420;
-                --ambient-brightness: 0.94;
-            }
-
-            body.light-theme header:not(.scrolled) {
-                background: linear-gradient(to bottom, rgba(246,244,239,0.9) 0%, transparent 100%);
-            }
-
-            body.light-theme header.scrolled {
-                background: rgba(246,244,239,0.88);
-            }
-
-            body.light-theme #global-tooltip {
-                box-shadow: 0 20px 40px rgba(30,25,15,0.14);
-            }
-
-            body.light-theme ::-webkit-scrollbar-track {
-                background: #ece9e1;
-            }
-
-            /* --- THEME TOGGLE SWITCH --- */
-            .theme-toggle {
-                position: relative;
-                width: 52px;
-                height: 28px;
-                border-radius: 999px;
-                background: var(--card2);
-                border: 1px solid var(--border2);
-                cursor: pointer;
-                flex-shrink: 0;
-                transition: background .3s;
-                display: flex;
-                align-items: center;
-                padding: 3px;
-            }
-
-            .theme-toggle .toggle-knob {
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, var(--accent), var(--accent2));
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.7rem;
-                transition: transform .35s cubic-bezier(.5,0,.2,1.4);
-                transform: translateX(0);
-                color: #fff;
-            }
-
-            body.light-theme .theme-toggle .toggle-knob {
-                transform: translateX(24px);
             }
 
             * {
@@ -252,7 +179,7 @@
                 z-index: -1;
                 background-size: cover;
                 background-position: center top;
-                filter: blur(25px) brightness(var(--ambient-brightness));
+                filter: blur(25px) brightness(0.15);
                 opacity: 0;
                 transition: opacity 0.6s ease, background-image 0.6s ease;
                 pointer-events: none;
@@ -489,7 +416,7 @@
             #global-tooltip {
                 position: fixed;
                 width: 340px;
-                background: var(--tooltip-bg);
+                background: rgba(14, 14, 28, 0.85);
                 backdrop-filter: blur(20px);
                 border: 1px solid var(--border2);
                 border-radius: 12px;
@@ -516,7 +443,7 @@
             .tt-title {
                 font-size: 1.1rem;
                 font-weight: 700;
-                color: var(--tooltip-text);
+                color: #fff;
                 line-height: 1.3;
             }
 
@@ -598,9 +525,9 @@
             .tt-btn-add {
                 width: 40px;
                 height: 40px;
-                background: var(--card2);
+                background: rgba(255,255,255,0.1);
                 border: 1px solid var(--border);
-                color: var(--tooltip-text);
+                color: #fff;
                 border-radius: 8px;
                 display: flex;
                 align-items: center;
@@ -611,8 +538,8 @@
             }
 
             .tt-btn-add:hover {
-                background: var(--accent);
-                color: #fff;
+                background: #fff;
+                color: #000;
             }
 
             @media (max-width: 1024px) {
@@ -2784,9 +2711,6 @@ Note: Episodes 1-6 had an early release by ABEMA and Crunchyroll on June 3rd, 20
                 <div class="nav-indicator" id="nav-indicator" style="width: 70px; left: 0px;"></div>
             </nav>
             <div class="header-right">
-                <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark theme">
-                    <div class="toggle-knob" id="theme-toggle-knob">🌙</div>
-                </div>
                 <div class="lang-toggle en" id="title-toggle" onclick="toggleTitleLang()">
                     <span class="en">EN</span>
                     / <span class="jp">JP</span>
@@ -7278,24 +7202,5 @@ To save his stricken allies, Subaru fac…</div>
                 }
                 )(window)
             }();
-        </script>
-        <script>
-            (function() {
-                var KNOB = { dark: '🌙', light: '☀️' };
-                function applyTheme(theme) {
-                    var isLight = theme === 'light';
-                    document.body.classList.toggle('light-theme', isLight);
-                    var knob = document.getElementById('theme-toggle-knob');
-                    if (knob) knob.textContent = isLight ? KNOB.light : KNOB.dark;
-                }
-                window.toggleTheme = function() {
-                    var next = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-                    try { localStorage.setItem('animenexus-theme', next); } catch (e) {}
-                    applyTheme(next);
-                };
-                var saved = 'dark';
-                try { saved = localStorage.getItem('animenexus-theme') || 'dark'; } catch (e) {}
-                applyTheme(saved);
-            })();
         </script>
     </body>
