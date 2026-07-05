@@ -5732,24 +5732,54 @@ To save his stricken allies, Subaru fac…</div>
         <script>
             const AL = 'https://graphql.anilist.co';
 
-            const PROVIDERS = {
-                megaplay: {
-                    name: 'MegaPlay',
-                    url: (id, ep, lang) => `https://megaplay.buzz/stream/mal/${id}/${ep}/${lang}`
-                },
-                animeplay: {
-                    name: 'AnimePlay',
-                    url: (id, ep, lang) => `https://animeplay.cfd/stream/mal/${id}/${ep}/${lang}`
-                },
-                tryembed: {
-                    name: 'TryEmbed',
-                    url: (id, ep, lang) => `https://tryembed.us.cc/embed/anime/${id}/${ep}/${lang}`
-                },
-                mostream: {
-                    name: 'MoStream',
-                    url: (id, ep, lang) => `https://mostream.us/anime.php?mal=${id}&e=${ep}&lang=${lang}`
-                }
-            };
+           const PROVIDERS = {
+
+    megaplay: {
+        name: "MegaPlay",
+        url: (id, ep, lang) =>
+            `https://megaplay.buzz/stream/mal/${id}/${ep}/${lang}`
+    },
+
+    animeplay: {
+        name: "AnimePlay",
+        url: (id, ep, lang) =>
+            `https://animeplay.cfd/stream/mal/${id}/${ep}/${lang}`
+    },
+
+    tryembed: {
+        name: "TryEmbed",
+        url: (id, ep, lang) =>
+            `https://tryembed.us.cc/embed/anime/${id}/${ep}/${lang}`
+    },
+
+    mostream: {
+        name: "MoStream",
+        url: (id, ep, lang) =>
+            `https://mostream.us/anime.php?mal=${id}&e=${ep}&lang=${lang}`
+    },
+
+    // Add your own additional providers below.
+    // These are examples — point them at APIs you own.
+
+    server5: {
+        name: "Server 5",
+        url: (id, ep, lang) =>
+            `https://YOUR-DOMAIN/api/server5?mal=${id}&ep=${ep}&lang=${lang}`
+    },
+
+    server6: {
+        name: "Server 6",
+        url: (id, ep, lang) =>
+            `https://YOUR-DOMAIN/api/server6?mal=${id}&ep=${ep}&lang=${lang}`
+    },
+
+    server7: {
+        name: "Server 7",
+        url: (id, ep, lang) =>
+            `https://YOUR-DOMAIN/api/server7?mal=${id}&ep=${ep}&lang=${lang}`
+    }
+
+};
 
             let state = {
                 anilistId: null,
