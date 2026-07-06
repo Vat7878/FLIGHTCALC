@@ -5758,6 +5758,30 @@ To save his stricken allies, Subaru fac…</div>
             `https://mostream.us/anime.php?mal=${id}&e=${ep}&lang=${lang}`
     },
 
+    // Add your own additional providers below.
+    // These are examples — point them at APIs you own.
+
+    server5: {
+        name: "Server 5",
+        url: (id, ep, lang) =>
+            `anivexa: {
+    name: "Anivexa",
+    url: (id, ep, lang) =>
+        `https://anivexa-api-tawny.vercel.app/watch/anikoto/${id}/${ep}`
+},`
+    },
+
+    server6: {
+        name: "Server 6",
+        url: (id, ep, lang) =>
+            `https://YOUR-DOMAIN/api/server6?mal=${id}&ep=${ep}&lang=${lang}`
+    },
+
+    server7: {
+        name: "Server 7",
+        url: (id, ep, lang) =>
+            `https://YOUR-DOMAIN/api/server7?mal=${id}&ep=${ep}&lang=${lang}`
+    }
 
 };
 
