@@ -5561,4 +5561,81 @@ KageWatchAnalytics.init();
 </script>
 
 
+<script>
+      // 1. Enhanced Mobile & iPad Detection
+      function isMobileDevice() {
+          const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+          const isStandardMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+          const isIPad = (navigator.platform === 'MacIntel' || userAgent.includes('Macintosh')) && navigator.maxTouchPoints > 1;
+          const isSmallScreen = window.innerWidth <= 768;
+
+          return isStandardMobile || isIPad || isSmallScreen;
+      }
+
+      // 2. Video Player Setup
+      function setupVideoPlayer(videoElement, streamUrl) {
+          const isMobile = isMobileDevice();
+
+          if (isMobile) {
+              videoElement.setAttribute('controls', 'true');
+              videoElement.setAttribute('playsinline', 'true');
+              videoElement.setAttribute('webkit-playsinline', 'true');
+              videoElement.setAttribute('x5-playsinline', 'true');
+
+              if (window.player && typeof window.player.destroy === 'function') {
+                  window.player.destroy();
+                  window.player = null;
+              }
+
+              if (streamUrl) {
+                  if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                      videoElement.src = streamUrl;
+                  } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                      if (window.hlsInstance) {
+                          window.hlsInstance.destroy();
+                      }
+                      const hls = new Hls();
+                      hls.loadSource(streamUrl);
+                      hls.attachMedia(videoElement);
+                      window.hlsInstance = hls;
+                  } else {
+                      videoElement.src = streamUrl;
+                  }
+              }
+          } else {
+              videoElement.removeAttribute('controls');
+
+              if (streamUrl && typeof Hls !== 'undefined' && Hls.isSupported()) {
+                  if (window.hlsInstance) {
+                      window.hlsInstance.destroy();
+                  }
+                  const hls = new Hls();
+                  hls.loadSource(streamUrl);
+                  hls.attachMedia(videoElement);
+                  window.hlsInstance = hls;
+
+                  hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                      initPlyr(videoElement);
+                  });
+              } else {
+                  initPlyr(videoElement);
+              }
+          }
+      }
+
+      // 3. Initialize Plyr for Desktop
+      function initPlyr(videoElement) {
+          if (!window.player) {
+              window.player = new Plyr(videoElement, {
+                  controls: [
+                      'play-large', 'play', 'progress', 'current-time', 
+                      'duration', 'mute', 'volume', 'captions', 
+                      'settings', 'pip', 'airplay', 'fullscreen'
+                  ]
+              });
+          }
+      }
+    </script>
+
 </body>
+</html></body>
