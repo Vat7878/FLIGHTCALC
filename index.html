@@ -4277,106 +4277,104 @@ async function playEp(ep) {
           const isAndroid = /Android/i.test(navigator.userAgent);
           const isMobile = isIOS || isAndroid;
 
-          if (isMobile) {
-              // ====================================================
-              // 📱 MOBILE (iOS & Android): Device Native Player
-              // ====================================================
+          // ALL DEVICES USE THE SAME HLS + PLYR PLAYER.
+          // The old mobile branch selected native Android controls, which
+          // was the path that was failing.
+          video.controls = false;
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+          video.setAttribute('x5-playsinline', 'true');
 
-              // Enable native system video controls & inline mobile playback
-              video.controls = true;
-              video.setAttribute('playsinline', 'true');
-              video.setAttribute('webkit-playsinline', 'true');
+          if (window.activePlyrInstance && typeof window.activePlyrInstance.destroy === 'function') {
+              try { window.activePlyrInstance.destroy(); } catch (_) {}
+              window.activePlyrInstance = null;
+          }
+          if (window.activeHlsInstance) {
+              try { window.activeHlsInstance.destroy(); } catch (_) {}
+              window.activeHlsInstance = null;
+          }
 
-              // Destroy any active Plyr instance on mobile
-              if (window.activePlyrInstance && typeof window.activePlyrInstance.destroy === 'function') {
-                  window.activePlyrInstance.destroy();
-                  window.activePlyrInstance = null;
-              }
+          if (window.Hls && Hls.isSupported()) {
+              const hls = new Hls({
+                  maxBufferLength: 30,
+                  maxMaxBufferLength: 90,
+                  enableWorker: true,
+                  backBufferLength: 30
+              });
+              window.activeHlsInstance = hls;
 
-              if (isIOS || video.canPlayType('application/vnd.apple.mpegurl')) {
-                  // iOS Native Video Player (Safari native HLS handling)
-                  video.src = proxyUrl;
-                  if (isAutoPlay) video.play().catch(() => {});
-              } else if (window.Hls && Hls.isSupported()) {
-                  // Android Native Player using HLS.js for stream loading
-                  if (window.activeHlsInstance) {
-                      window.activeHlsInstance.destroy();
-                  }
-                  const hls = new Hls({
-                      maxBufferLength: 30,
-                      maxMaxBufferLength: 90,
-                      enableWorker: true,
-                      backBufferLength: 30
-                  });
-                  window.activeHlsInstance = hls;
+              // Android is happier when the media is attached before loading.
+              hls.attachMedia(video);
+
+              hls.on(Hls.Events.MEDIA_ATTACHED, () => {
                   hls.loadSource(proxyUrl);
-                  hls.attachMedia(video);
+              });
 
-                  hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                      if (isAutoPlay) video.play().catch(() => {});
+              hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                  const availableQualities = hls.levels
+                      .map(l => l.height)
+                      .filter((v, i, a) => a.indexOf(v) === i && v > 0)
+                      .sort((a, b) => b - a);
+                  availableQualities.unshift(0);
+
+                  // EXACT SAME PLAYER CONTROLS/QUALITY SYSTEM AS PC.
+                  plyrPlayer = new Plyr(video, {
+                      controls: [
+                          'play-large', 'rewind', 'play', 'fast-forward',
+                          'progress', 'current-time', 'duration', 'mute',
+                          'volume', 'captions', 'settings', 'pip', 'fullscreen'
+                      ],
+                      settings: ['captions', 'quality', 'speed'],
+                      captions: { active: true, update: true, language: 'en' },
+                      quality: {
+                          default: 0,
+                          options: availableQualities,
+                          forced: true,
+                          onChange: (value) => {
+                              hls.currentLevel = value === 0
+                                  ? -1
+                                  : hls.levels.findIndex(level => level.height === value);
+                          }
+                      },
+                      i18n: { qualityLabel: { 0: 'Auto' } }
                   });
 
-                  hls.on(Hls.Events.ERROR, (e, d) => {
-                      if (d.fatal) {
-                          document.getElementById('p-loader').style.display = "flex";
-                          document.getElementById('p-loader').innerHTML = "Stream Error. Please use Backup Server.";
-                      }
-                  });
-              } else {
-                  video.src = proxyUrl;
-                  if (isAutoPlay) video.play().catch(() => {});
-              }
-
-          } else {
-              // ====================================================
-              // 💻 DESKTOP / PC: Plyr Player Setup (Unchanged)
-              // ====================================================
-              video.controls = false;
-
-              if (window.Hls && Hls.isSupported()) {
-                  if (window.activeHlsInstance) {
-                      window.activeHlsInstance.destroy();
-                  }
-                  const hls = new Hls({
-                      maxBufferLength: 30,
-                      maxMaxBufferLength: 90,
-                      enableWorker: true,
-                      backBufferLength: 30
-                  });
-                  window.activeHlsInstance = hls;
-                  hls.loadSource(proxyUrl);
-                  hls.attachMedia(video);
-                  
-                  hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                      let availableQualities = hls.levels.map((l) => l.height).filter((value, index, self) => self.indexOf(value) === index && value > 0).sort((a, b) => b - a);
-                      availableQualities.unshift(0); 
-
-                      plyrPlayer = new Plyr(video, {
-                          controls: ['play-large', 'rewind', 'play', 'fast-forward', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'pip', 'fullscreen'],
-                          settings: ['captions', 'quality', 'speed'],
-                          captions: { active: true, update: true, language: 'en' },
-                          quality: { default: 0, options: availableQualities, forced: true, onChange: (e) => { hls.currentLevel = (e === 0) ? -1 : hls.levels.findIndex(lvl => lvl.height === e); } },
-                          i18n: { qualityLabel: { 0: 'Auto' } }
-                      });
-                      window.activePlyrInstance = plyrPlayer;
-
-                      if (isAutoPlay) video.play().catch(() => {});
-                      injectCustomButtons(plyrPlayer);
-                  });
-                  
-                  hls.on(Hls.Events.ERROR, (e, d) => {
-                      if (d.fatal) {
-                          document.getElementById('p-loader').style.display = "flex";
-                          document.getElementById('p-loader').innerHTML = "Stream Error. Please use Backup Server.";
-                      }
-                  });
-              } else {
-                  video.src = proxyUrl;
-                  plyrPlayer = new Plyr(video);
                   window.activePlyrInstance = plyrPlayer;
+
                   if (isAutoPlay) video.play().catch(() => {});
                   injectCustomButtons(plyrPlayer);
-              }
+              });
+
+              hls.on(Hls.Events.ERROR, (event, data) => {
+                  if (!data.fatal) return;
+
+                  if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                      try { hls.startLoad(); return; } catch (_) {}
+                  }
+                  if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                      try { hls.recoverMediaError(); return; } catch (_) {}
+                  }
+
+                  const loader = document.getElementById('p-loader');
+                  if (loader) {
+                      loader.style.display = "flex";
+                      loader.innerHTML = "Stream Error. Please use Backup Server.";
+                  }
+              });
+          } else {
+              // Direct/native fallback, still wrapped in Plyr.
+              video.src = proxyUrl;
+              plyrPlayer = new Plyr(video, {
+                  controls: [
+                      'play-large', 'rewind', 'play', 'fast-forward',
+                      'progress', 'current-time', 'duration', 'mute',
+                      'volume', 'captions', 'settings', 'pip', 'fullscreen'
+                  ],
+                  settings: ['captions', 'speed']
+              });
+              window.activePlyrInstance = plyrPlayer;
+              if (isAutoPlay) video.play().catch(() => {});
+              injectCustomButtons(plyrPlayer);
           }
 
       }).catch(err => {
@@ -5719,54 +5717,34 @@ KageWatchAnalytics.init();
 
       // 2. Video Player Setup
       function setupVideoPlayer(videoElement, streamUrl) {
-          const isMobile = isMobileDevice();
+          videoElement.setAttribute('playsinline', 'true');
+          videoElement.setAttribute('webkit-playsinline', 'true');
+          videoElement.setAttribute('x5-playsinline', 'true');
+          videoElement.removeAttribute('controls');
 
-          if (isMobile) {
-              videoElement.setAttribute('controls', 'true');
-              videoElement.setAttribute('playsinline', 'true');
-              videoElement.setAttribute('webkit-playsinline', 'true');
-              videoElement.setAttribute('x5-playsinline', 'true');
+          if (window.hlsInstance) {
+              try { window.hlsInstance.destroy(); } catch (_) {}
+          }
 
-              if (window.player && typeof window.player.destroy === 'function') {
-                  window.player.destroy();
-                  window.player = null;
-              }
-
-              if (streamUrl) {
-                  if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                      videoElement.src = streamUrl;
-                  } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                      if (window.hlsInstance) {
-                          window.hlsInstance.destroy();
-                      }
-                      const hls = new Hls();
-                      hls.loadSource(streamUrl);
-                      hls.attachMedia(videoElement);
-                      window.hlsInstance = hls;
-                  } else {
-                      videoElement.src = streamUrl;
-                  }
-              }
-          } else {
-              videoElement.removeAttribute('controls');
-
-              if (streamUrl && typeof Hls !== 'undefined' && Hls.isSupported()) {
-                  if (window.hlsInstance) {
-                      window.hlsInstance.destroy();
-                  }
-                  const hls = new Hls();
-                  hls.loadSource(streamUrl);
-                  hls.attachMedia(videoElement);
-                  window.hlsInstance = hls;
-
-                  hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                      initPlyr(videoElement);
-                  });
-              } else {
+          if (streamUrl && typeof Hls !== 'undefined' && Hls.isSupported()) {
+              const hls = new Hls({
+                  maxBufferLength: 30,
+                  maxMaxBufferLength: 90,
+                  enableWorker: true,
+                  backBufferLength: 30
+              });
+              window.hlsInstance = hls;
+              hls.attachMedia(videoElement);
+              hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(streamUrl));
+              hls.on(Hls.Events.MANIFEST_PARSED, function () {
                   initPlyr(videoElement);
-              }
+              });
+          } else {
+              videoElement.src = streamUrl || '';
+              initPlyr(videoElement);
           }
       }
+
 
       // 3. Initialize Plyr for Desktop
       function initPlyr(videoElement) {
