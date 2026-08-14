@@ -980,6 +980,20 @@ header, header.scrolled,
 .ep-grid-wrap.list-mode .ep-box.active{background:rgba(100,149,237,.22);border-color:var(--accent)}
 .ep-grid-wrap.list-mode .ep-box.watched::after{left:0;top:0;bottom:0;width:3px;height:auto}
 </style>
+
+<style id="ios-video-fullscreen-css">
+.plyr video {
+  -webkit-playsinline: true !important;
+  object-fit: contain !important;
+}
+@media (max-width: 900px) {
+  .plyr video {
+    width:100%;
+    height:100%;
+  }
+}
+</style>
+
 </head>
 <body>
 
@@ -5810,6 +5824,78 @@ KageWatchAnalytics.init();
       if (el.plyr) attach(el.plyr);
     });
   }, 500);
+  setTimeout(function () { clearInterval(timer); }, 30000);
+})();
+</script>
+
+
+<script id="ios-fullscreen-fix">
+(function () {
+  function isIOSDevice() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function patchPlayer(player) {
+    if (!player || !player.elements || !player.elements.container) return;
+    const video = player.media;
+    if (!video || video.dataset.iosFullscreenFixed === '1') return;
+    video.dataset.iosFullscreenFixed = '1';
+
+    // iOS Safari does not expose the normal Fullscreen API for arbitrary
+    // elements. Its supported fullscreen route is the video element's
+    // WebKit fullscreen API.
+    if (!isIOSDevice() || typeof video.webkitEnterFullscreen !== 'function') return;
+
+    const container = player.elements.container;
+    const fullscreenButton = container.querySelector('.plyr__control[data-plyr="fullscreen"]');
+
+    if (fullscreenButton) {
+      fullscreenButton.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          if (video.webkitDisplayingFullscreen) {
+            if (typeof video.webkitExitFullscreen === 'function') {
+              video.webkitExitFullscreen();
+            }
+          } else {
+            video.webkitEnterFullscreen();
+          }
+        } catch (err) {
+          console.warn('iOS fullscreen:', err);
+        }
+      }, true);
+    }
+
+    // If Plyr tries its regular fullscreen API on iOS, force the video
+    // fullscreen method instead.
+    container.addEventListener('dblclick', function (e) {
+      if (e.target.closest('.plyr__controls')) return;
+      try {
+        if (video.webkitDisplayingFullscreen) {
+          video.webkitExitFullscreen?.();
+        } else {
+          video.webkitEnterFullscreen();
+        }
+      } catch (_) {}
+    });
+
+    video.addEventListener('webkitbeginfullscreen', function () {
+      container.classList.add('ios-native-fullscreen');
+    });
+    video.addEventListener('webkitendfullscreen', function () {
+      container.classList.remove('ios-native-fullscreen');
+    });
+  }
+
+  const timer = setInterval(function () {
+    if (window.activePlyrInstance) patchPlayer(window.activePlyrInstance);
+    document.querySelectorAll('.plyr').forEach(function (el) {
+      if (el.plyr) patchPlayer(el.plyr);
+    });
+  }, 400);
+
   setTimeout(function () { clearInterval(timer); }, 30000);
 })();
 </script>
