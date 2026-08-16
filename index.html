@@ -1281,15 +1281,22 @@ video {
 #history-section .cw-title,.cw-title{display:none!important}
 #history-section .cw-ep,.cw-ep{margin:0!important;display:block!important}
 #history-section .cw-bar,.cw-bar,#history-section .cw-time-badge,.cw-time-badge{display:none!important}
-#anime-landing{position:relative;min-height:calc(100dvh - 78px);background:#000;overflow:hidden;margin:0 -2px 32px}
-#anime-landing .landing-hero{position:absolute;inset:0 0 auto;height:58vh;min-height:390px;max-height:720px;overflow:hidden;background:#000}
-#anime-landing .landing-hero img{width:100%;height:100%;display:block;object-fit:cover;object-position:center top;filter:blur(7px);transform:scale(1.02)}
-#anime-landing .landing-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.02),rgba(0,0,0,.04) 38%,rgba(0,0,0,.28) 58%,rgba(0,0,0,.72) 76%,#000 100%)}
-#anime-landing .landing-content{position:relative;z-index:2;min-height:calc(100dvh - 78px);padding:clamp(260px,43vh,500px) clamp(20px,5vw,72px) 50px;display:flex;flex-direction:column;justify-content:flex-end}
-#anime-landing .landing-title{max-width:1000px;margin:0 auto 18px;width:100%;font-family:'Bebas Neue',sans-serif;font-size:clamp(2.7rem,6vw,5.8rem);line-height:.94;letter-spacing:2px;color:#fff;text-align:center;text-shadow:0 4px 24px #000}
-#anime-landing .landing-meta{max-width:900px;margin:0 auto 28px;width:100%;display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
-#anime-landing .landing-meta span{padding:5px 10px;border:1px solid rgba(100,149,237,.45);background:rgba(0,0,0,.48);color:#cbd8ff;border-radius:5px;font-size:.72rem;font-weight:700}
-#anime-landing .season-navigation{width:min(1100px,100%);margin:0 auto}
+#anime-landing{position:relative;background:#000;overflow:hidden;margin:0 -2px 32px;padding-bottom:36px}
+#anime-landing .landing-hero{position:relative;width:100%;height:min(76vh,720px);min-height:520px;overflow:hidden;background:#000}
+#anime-landing .landing-hero img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center top;filter:blur(7px);transform:scale(1.035)}
+#anime-landing .landing-hero-gradient{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.02) 0%,rgba(0,0,0,.04) 42%,rgba(0,0,0,.38) 62%,rgba(0,0,0,.90) 88%,#000 100%);pointer-events:none}
+#anime-landing .landing-hero-content{position:absolute;z-index:2;left:clamp(20px,4vw,56px);right:clamp(20px,4vw,56px);bottom:clamp(20px,4vh,42px);max-width:980px}
+#anime-landing .landing-back{display:block;margin:0 0 14px;border:0;background:transparent;color:#bbb;cursor:pointer;font-size:.78rem;padding:5px 0}
+#anime-landing .landing-back:hover{color:#fff}
+#anime-landing .landing-title{max-width:850px;margin:0 0 12px;font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,7vw,6rem);line-height:.92;letter-spacing:1.5px;color:#fff;text-align:left;text-shadow:0 4px 28px #000}
+#anime-landing .landing-meta{max-width:900px;margin:0 0 14px;display:flex;justify-content:flex-start;flex-wrap:wrap;gap:8px}
+#anime-landing .landing-meta span{padding:5px 10px;border:1px solid rgba(255,255,255,.20);background:rgba(0,0,0,.48);color:#eee;border-radius:4px;font-size:.72rem;font-weight:700}
+#anime-landing .landing-description{max-width:760px;margin:0 0 18px;color:#eee;font-size:clamp(.9rem,1.6vw,1.08rem);line-height:1.45;text-shadow:0 2px 12px #000;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+#anime-landing .landing-actions{display:flex;align-items:stretch;gap:10px}
+#anime-landing .landing-watch-btn{min-width:min(430px,72vw);height:54px;border:0;border-radius:0;background:#6495ED;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;padding:0 24px;box-shadow:0 5px 22px rgba(0,0,0,.32)}
+#anime-landing .landing-watch-btn:hover{filter:brightness(1.08)}
+#anime-landing .landing-bookmark{width:54px;height:54px;border:1px solid rgba(255,255,255,.55);background:rgba(0,0,0,.42);color:#fff;border-radius:0;font-size:1.65rem;cursor:pointer}
+#anime-landing .landing-episodes-section{position:relative;z-index:3;padding:0 clamp(20px,4vw,56px)}
 #anime-landing .season-navigation-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
 #anime-landing .season-navigation-title{font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;font-size:1.35rem;color:#fff}
 #anime-landing .season-jump{width:120px;background:#111;color:#fff;border:1px solid #2a2a2a;padding:8px 10px;border-radius:5px;outline:none}
@@ -1312,7 +1319,7 @@ video {
 .player-back{display:none;align-items:center;gap:8px;width:max-content;margin:0 0 14px;border:1px solid #222;background:#0b0b0b;color:#aaa;padding:8px 12px;border-radius:0;cursor:pointer;font-size:.78rem;font-weight:700}
 #watch-view.player-mode .player-back{display:flex}
 #watch-view.player-mode .player-back:hover{color:#fff;border-color:#6495ED}
-@media(max-width:700px){#anime-landing{min-height:calc(100dvh - 64px);margin-left:-12px;margin-right:-12px}#anime-landing .landing-hero{height:52vh;min-height:300px}#anime-landing .landing-content{min-height:calc(100dvh - 64px);padding:220px 16px 30px}#anime-landing .landing-title{font-size:clamp(2.5rem,12vw,4rem)}#anime-landing .landing-episodes{grid-template-columns:repeat(5,1fr);max-height:235px}}
+@media(max-width:700px){#anime-landing{margin-left:-12px;margin-right:-12px}#anime-landing .landing-hero{height:78vh;min-height:570px;max-height:760px}#anime-landing .landing-hero-content{left:16px;right:16px;bottom:20px}#anime-landing .landing-title{font-size:clamp(2.5rem,12vw,4rem)}#anime-landing .landing-description{font-size:.88rem;-webkit-line-clamp:3}#anime-landing .landing-watch-btn{height:52px;min-width:0;flex:1}#anime-landing .landing-bookmark{width:52px;height:52px}#anime-landing .landing-episodes-section{padding:0 16px}#anime-landing .landing-episodes{grid-template-columns:repeat(5,1fr);max-height:235px}}
 </style>
 <style id="anexus-series-art-fix">
 /* More From This Series: never let the artwork collapse/hide. */
@@ -3353,11 +3360,21 @@ window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
   </div>
 
   <section id="anime-landing" aria-label="Anime episodes">
-    <div class="landing-hero"><img id="landing-banner" src="" alt=""></div>
-    <div class="landing-content">
-      <button class="landing-back" onclick="goHome()">← Back to Home</button>
-      <h1 class="landing-title" id="landing-title">Anime</h1>
-      <div class="landing-meta" id="landing-meta"></div>
+    <div class="landing-hero">
+      <img id="landing-banner" src="" alt="">
+      <div class="landing-hero-gradient"></div>
+      <div class="landing-hero-content">
+        <button class="landing-back" onclick="goHome()">← Back to Home</button>
+        <h1 class="landing-title" id="landing-title">Anime</h1>
+        <div class="landing-meta" id="landing-meta"></div>
+        <p class="landing-description" id="landing-description"></p>
+        <div class="landing-actions">
+          <button class="landing-watch-btn" id="landing-watch-btn">▷ <span>Start Watching</span></button>
+          <button class="landing-bookmark" aria-label="Add to watchlist">♡</button>
+        </div>
+      </div>
+    </div>
+    <div class="landing-episodes-section">
       <div class="season-navigation">
         <div class="season-navigation-head">
           <div class="season-navigation-title">EPISODES</div>
@@ -4528,6 +4545,15 @@ function renderAnimeLanding(){
   title.textContent=state.animeTitle||'Anime';
   img.src=state.animeBanner||state.animeCover||'';
   img.alt=`${state.animeTitle||'Anime'} banner`;
+  const desc=document.getElementById('landing-description');
+  if(desc) desc.textContent=state.animeObj?.description ? state.animeObj.description.replace(/<[^>]*>/g,'').trim() : 'No description available.';
+  const watchBtn=document.getElementById('landing-watch-btn');
+  if(watchBtn){
+    const watched=Store.watchedEps(state.malId);
+    const latest=watched.length ? Math.max(...watched) : 0;
+    watchBtn.querySelector('span').textContent=latest ? `Continue Watching E${latest}` : 'Start Watching';
+    watchBtn.onclick=()=>showEpisodePlayer(latest || 1);
+  }
   meta.innerHTML='';
   const add=t=>{const s=document.createElement('span');s.textContent=t;meta.appendChild(s)};
   if(state.animeObj?.averageScore)add(`★ ${(state.animeObj.averageScore/10).toFixed(1)}`);
