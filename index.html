@@ -1024,6 +1024,48 @@ header, header.scrolled,
 <link rel="preconnect" href="https://s4.anilist.co" crossorigin>
 <link rel="dns-prefetch" href="//s4.anilist.co">
 
+
+<style id="catalog-rectangular-continue-fix">
+/* Catalog banners: restore the original rectangular presentation. */
+.a-card,
+.a-card-img-wrap {
+  border-radius: 0 !important;
+}
+.a-card-img {
+  border-radius: 0 !important;
+}
+
+/* Keep the entire banner visible in Continue Watching.
+   Do NOT stretch/crop the artwork; contain it inside its card. */
+.continue-card,
+.continue-card .cw-card,
+.cw-card {
+  overflow: visible !important;
+}
+
+.continue-card img,
+.cw-card img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* The progress/resume icon sits over the card without covering the artwork. */
+.continue-card .continue-badge,
+.cw-card .continue-badge,
+.cw-card .cw-progress,
+.cw-card .resume-icon {
+  z-index: 5 !important;
+}
+
+/* Give the image enough room so its full aspect ratio remains visible. */
+.cw-card .cw-img,
+.cw-card .cw-card-img,
+.cw-card img {
+  width: 100% !important;
+  height: 100% !important;
+}
+</style>
+
 </head>
 <body>
 
