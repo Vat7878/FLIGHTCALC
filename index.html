@@ -1669,6 +1669,550 @@ video {
 }
 </style>
 
+
+<style>
+/* =========================================================
+   EXACT MOBILE ANIME OPENING / DETAIL SCREEN
+   Home screen and desktop are intentionally untouched.
+   ========================================================= */
+@media (max-width: 768px) {
+  body.anime-detail-open {
+    background:#000 !important;
+    color:#fff !important;
+  }
+
+  body.anime-detail-open .breadcrumb,
+  body.anime-detail-open .watch-left > .player-container,
+  body.anime-detail-open .watch-left > .player-actions,
+  body.anime-detail-open .watch-left > .server-box,
+  body.anime-detail-open .watch-left > #airing-schedule,
+  body.anime-detail-open .watch-left > .anime-details-box {
+    display:none !important;
+  }
+
+  body.anime-detail-open .watch-layout {
+    display:block !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  body.anime-detail-open .watch-left {
+    display:block !important;
+    width:100% !important;
+  }
+
+  body.anime-detail-open .mobile-cr-detail {
+    display:block !important;
+    width:100%;
+    min-height:100vh;
+    background:#000;
+    overflow:hidden;
+  }
+
+  /* Top bar */
+  .cr-detail-topbar {
+    height:68px;
+    position:relative;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    background:linear-gradient(to bottom,rgba(0,0,0,.92),rgba(0,0,0,.12));
+    margin-bottom:-68px;
+  }
+
+  .cr-detail-topbar button {
+    border:0;
+    background:none;
+    color:#fff;
+    cursor:pointer;
+  }
+
+  .cr-close {
+    width:44px;
+    height:44px;
+    font-size:48px;
+    line-height:35px;
+    font-weight:200;
+    padding:0;
+  }
+
+  .cr-top-title {
+    flex:1;
+    text-align:center;
+    font-size:20px;
+    font-weight:800;
+    text-shadow:0 2px 8px #000;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    padding:0 10px;
+  }
+
+  .cr-top-actions {
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .cr-top-actions button {
+    font-size:28px;
+    width:36px;
+    height:44px;
+  }
+
+  /* Hero image + blurred surroundings */
+  .cr-hero {
+    position:relative;
+    height:510px;
+    padding:78px 27px 0;
+    box-sizing:border-box;
+    overflow:hidden;
+    background:#000;
+  }
+
+  .cr-hero-backdrop {
+    position:absolute;
+    inset:-35px;
+    background-image:var(--cr-hero-bg);
+    background-position:center;
+    background-size:cover;
+    filter:blur(22px);
+    transform:scale(1.08);
+    opacity:.48;
+  }
+
+  .cr-hero::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to bottom,
+      rgba(0,0,0,.02) 45%,
+      rgba(0,0,0,.25) 62%,
+      #000 100%);
+    pointer-events:none;
+  }
+
+  .cr-hero-frame {
+    position:relative;
+    z-index:2;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    overflow:hidden;
+    border-radius:2px;
+    box-shadow:0 8px 24px rgba(0,0,0,.45);
+    background:#111;
+  }
+
+  .cr-hero-image {
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center;
+  }
+
+  /* Information below hero */
+  .cr-detail-content {
+    position:relative;
+    z-index:5;
+    margin-top:-45px;
+    padding:0 28px 24px;
+    background:linear-gradient(to bottom,transparent 0,#000 34px);
+  }
+
+  .cr-award-row {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:9px;
+    color:#aaa;
+    font-size:13px;
+    margin-bottom:28px;
+  }
+
+  .cr-award-mark {
+    color:var(--accent);
+    font-size:14px;
+  }
+
+  .cr-title-block {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+
+  .cr-cover-logo {
+    width:min(270px,62vw);
+    max-height:105px;
+    object-fit:contain;
+    object-position:center;
+    border-radius:0;
+    margin:0 auto 14px;
+    /* The catalog artwork is retained, but the detail screen presents it
+       as a compact title mark instead of a tall card. */
+  }
+
+  .cr-title-block h1 {
+    display:none;
+    margin:0 0 10px;
+    font-size:27px;
+    line-height:1.1;
+    font-weight:800;
+  }
+
+  .cr-meta-line {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    color:#d5d5d5;
+    font-size:13px;
+    line-height:1.5;
+    text-align:center;
+    margin-bottom:16px;
+  }
+
+  .cr-age {
+    background:#29292d;
+    color:#fff;
+    font-weight:800;
+    font-style:italic;
+    padding:5px 8px;
+    border-radius:2px;
+  }
+
+  .cr-rating-row {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    color:#aaa;
+    font-size:16px;
+    margin:5px 0 18px;
+  }
+
+  .cr-stars {
+    display:flex;
+    gap:3px;
+    color:#eee;
+    font-size:25px;
+    line-height:1;
+  }
+
+  .cr-rating-divider {
+    width:1px;
+    height:26px;
+    background:#777;
+  }
+
+  .cr-rating-row strong {
+    color:#fff;
+  }
+
+  .cr-actions-row {
+    display:flex;
+    justify-content:center;
+    gap:58px;
+    margin:4px 0 34px;
+  }
+
+  .cr-actions-row button {
+    min-width:72px;
+    border:0;
+    background:transparent;
+    color:var(--accent);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:7px;
+    font-size:15px;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  .cr-action-icon {
+    font-size:38px;
+    font-weight:300;
+    line-height:.8;
+  }
+
+  .cr-description {
+    color:#d8d8d8;
+    font-size:17px;
+    line-height:1.45;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+  }
+
+  .cr-description.expanded {
+    display:block;
+    -webkit-line-clamp:unset;
+  }
+
+  .cr-more-details {
+    display:block;
+    margin:20px auto 0;
+    border:0;
+    background:none;
+    color:var(--accent);
+    font-size:15px;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  /* Episodes / music / recommendations tabs */
+  .cr-mobile-tabs {
+    display:flex;
+    align-items:flex-end;
+    gap:0;
+    height:68px;
+    padding:0 16px;
+    border-bottom:1px solid #28282d;
+    background:#000;
+  }
+
+  .cr-mobile-tabs button {
+    flex:1;
+    height:68px;
+    border:0;
+    border-bottom:3px solid transparent;
+    background:none;
+    color:#8f8f93;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+
+  .cr-mobile-tabs button.active {
+    color:#fff;
+    border-bottom-color:var(--accent);
+  }
+
+  /* Season row */
+  body.anime-detail-open .cr-season-row {
+    display:block !important;
+    background:#000;
+    border-bottom:1px solid #28282d;
+  }
+
+  .cr-season-button {
+    width:100%;
+    height:66px;
+    border:0;
+    background:#000;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:0 28px;
+    font-size:18px;
+    text-align:left;
+    cursor:pointer;
+  }
+
+  .cr-season-button strong {
+    min-width:0;
+    flex:1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .cr-season-ellipsis {
+    font-size:27px;
+  }
+
+  /* Episode area in the same visual language as the screenshot */
+  body.anime-detail-open .episodes-panel {
+    width:100% !important;
+    max-height:none !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+    background:#000 !important;
+  }
+
+  body.anime-detail-open .episodes-panel > .ep-tabs {
+    display:none !important;
+  }
+
+  body.anime-detail-open .ep-header {
+    min-height:58px;
+    padding:0 28px !important;
+    background:#000 !important;
+    border-bottom:0 !important;
+  }
+
+  body.anime-detail-open .ep-header-title {
+    font-size:15px !important;
+    font-weight:800 !important;
+    color:#fff !important;
+  }
+
+  body.anime-detail-open .ep-header-tools .ep-search {
+    display:none !important;
+  }
+
+  body.anime-detail-open .ep-view-toggle {
+    display:block !important;
+  }
+
+  body.anime-detail-open .ep-grid-wrap {
+    max-height:none !important;
+    overflow:visible !important;
+    padding:0 28px 120px !important;
+  }
+
+  body.anime-detail-open .ep-grid.list-mode {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:0 !important;
+  }
+
+  body.anime-detail-open .ep-box {
+    min-height:106px;
+    display:flex !important;
+    align-items:center !important;
+    gap:14px !important;
+    border-bottom:1px solid rgba(255,255,255,.08) !important;
+    background:#000 !important;
+    border-radius:0 !important;
+    padding:10px 0 !important;
+  }
+
+  body.anime-detail-open .ep-list-thumb {
+    width:145px !important;
+    height:82px !important;
+    flex:none !important;
+    object-fit:cover !important;
+    border-radius:1px !important;
+  }
+
+  body.anime-detail-open .ep-list-info {
+    min-width:0;
+    flex:1;
+  }
+
+  body.anime-detail-open .ep-list-name {
+    color:#fff !important;
+    font-size:15px !important;
+    line-height:1.3 !important;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  body.anime-detail-open .ep-list-sub {
+    color:#999 !important;
+    margin-top:7px;
+    font-size:13px !important;
+  }
+
+  /* The fixed CTA is part of the anime detail page only. */
+  body.anime-detail-open .mobile-watch-cta {
+    display:flex !important;
+    position:fixed;
+    left:28px;
+    right:28px;
+    bottom:max(12px, env(safe-area-inset-bottom));
+    z-index:10001;
+    gap:14px;
+    padding:0;
+    pointer-events:none;
+  }
+
+  body.anime-detail-open .mobile-watch-main,
+  body.anime-detail-open .mobile-watch-bookmark {
+    pointer-events:auto;
+    height:58px;
+    border:2px solid var(--accent);
+    cursor:pointer;
+  }
+
+  body.anime-detail-open .mobile-watch-main {
+    flex:1;
+    border-radius:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    background:var(--accent);
+    color:#000;
+    font-size:16px;
+    font-weight:800;
+  }
+
+  body.anime-detail-open .mobile-watch-main span {
+    font-size:25px;
+  }
+
+  body.anime-detail-open .mobile-watch-bookmark {
+    width:74px;
+    background:#000;
+    color:var(--accent);
+    font-size:30px;
+  }
+
+  /* Once an episode is chosen, return to the existing player. */
+  body.anime-detail-open.detail-playing .mobile-cr-detail,
+  body.anime-detail-open.detail-playing .cr-season-row {
+    display:none !important;
+  }
+
+  body.anime-detail-open.detail-playing .mobile-watch-cta {
+    display:none !important;
+  }
+
+  body.anime-detail-open.detail-playing #player-wrap {
+    display:block !important;
+    height:auto !important;
+    min-height:56vw !important;
+    opacity:1 !important;
+    overflow:visible !important;
+    pointer-events:auto !important;
+    background:#000 !important;
+  }
+
+  @media (max-width:480px) {
+    .cr-hero {
+      height:510px;
+      padding-left:27px;
+      padding-right:27px;
+    }
+
+    .cr-detail-content {
+      padding-left:28px;
+      padding-right:28px;
+    }
+
+    .cr-description {
+      font-size:16px;
+    }
+
+    body.anime-detail-open .ep-list-thumb {
+      width:145px !important;
+      height:82px !important;
+    }
+
+    body.anime-detail-open .mobile-watch-cta {
+      left:28px;
+      right:28px;
+    }
+  }
+}
+</style>
+
 </head>
 <body>
 
@@ -4750,101 +5294,162 @@ function renderEpisodeList(){
 
 function setupMobileAnimeDetail(m, watched = []) {
   document.body.classList.add('anime-detail-open');
+  document.body.classList.remove('detail-playing');
 
   const watchView = document.getElementById('watch-view');
   if (!watchView) return;
 
-  // Mobile-only header, matching the supplied anime-detail reference.
-  let bar = watchView.querySelector('.mobile-anime-detail-bar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.className = 'mobile-anime-detail-bar';
-    bar.innerHTML = `
-      <button class="mobile-detail-close" type="button" aria-label="Close" onclick="goHome()">×</button>
-      <div class="mobile-detail-title" id="mobile-detail-title"></div>
-      <button class="mobile-detail-menu" type="button" aria-label="More">⋮</button>
-    `;
-    watchView.insertBefore(bar, watchView.firstChild);
-  }
+  // Remove older injected mobile-detail elements so this function is the
+  // single source of truth for the mobile anime-opening screen.
+  watchView.querySelectorAll(
+    '.mobile-anime-detail-bar, .mobile-anime-tabs, .mobile-watch-cta, .mobile-cr-detail'
+  ).forEach(el => el.remove());
+
   const title = getTitle(m.title);
-  const titleEl = bar.querySelector('#mobile-detail-title');
-  if (titleEl) titleEl.textContent = title;
+  const score = m.averageScore ? (m.averageScore / 10).toFixed(1) : '—';
+  const year = m.startDate?.year || '';
+  const genres = (m.genres || []).slice(0, 5);
+  const hero = m.bannerImage || m.coverImage?.extraLarge || m.coverImage?.large || '';
+  const cover = String(m.id) === '21'
+    ? (typeof ONE_PIECE_CUSTOM_COVER !== 'undefined' ? ONE_PIECE_CUSTOM_COVER : (m.coverImage?.extraLarge || hero))
+    : (m.coverImage?.extraLarge || hero);
+  const desc = m.description
+    ? m.description.replace(/<[^>]*>/g, '').trim()
+    : 'No description available.';
 
-  // Use the highest-resolution artwork available. One Piece keeps its custom artwork.
-  const detailImage = String(m.id) === '21'
-    ? (typeof ONE_PIECE_CUSTOM_COVER !== 'undefined' ? ONE_PIECE_CUSTOM_COVER : m.coverImage?.extraLarge)
-    : (m.bannerImage || m.coverImage?.extraLarge || m.coverImage?.large);
+  // The requested screen is mobile-only. Desktop keeps the original watch UI.
+  const detail = document.createElement('section');
+  detail.className = 'mobile-cr-detail';
+  detail.setAttribute('aria-label', `${title} details`);
+  detail.innerHTML = `
+    <div class="cr-detail-topbar">
+      <button class="cr-close" type="button" aria-label="Close" onclick="goHome()">×</button>
+      <div class="cr-top-title">${title}</div>
+      <div class="cr-top-actions">
+        <button type="button" aria-label="Cast">▣</button>
+        <button type="button" aria-label="More">⋮</button>
+      </div>
+    </div>
 
-  const details = watchView.querySelector('.anime-details-box');
-  if (details) {
-    details.style.setProperty('--mobile-detail-art', `url("${detailImage || ''}")`);
+    <div class="cr-hero" style="--cr-hero-bg:url('${String(hero).replace(/'/g, "\'")}')">
+      <div class="cr-hero-backdrop"></div>
+      <div class="cr-hero-frame">
+        <img src="${hero}" alt="${title}" class="cr-hero-image" fetchpriority="high" decoding="async">
+      </div>
+    </div>
 
-    let actions = details.querySelector('.mobile-detail-actions');
-    if (!actions) {
-      actions = document.createElement('div');
-      actions.className = 'mobile-detail-actions';
-      actions.innerHTML = `
-        <button class="mobile-detail-action" type="button" onclick="Store.toggleFav(state.animeObj)">
-          <span class="action-icon">＋</span><span>My List</span>
+    <div class="cr-detail-content">
+      <div class="cr-award-row">
+        <span class="cr-award-mark">◆</span>
+        <span>Anime Awards Winner!</span>
+      </div>
+
+      <div class="cr-title-block">
+        <img class="cr-cover-logo" src="${cover}" alt="${title}" loading="eager" decoding="async">
+        <h1>${title}</h1>
+      </div>
+
+      <div class="cr-meta-line">
+        <span class="cr-age">U/A 16+</span>
+        <span>◆</span>
+        <span>Dub | Sub</span>
+        <span>◆</span>
+        ${genres.slice(0,3).map(g => `<span>${g}</span>`).join('<span>, </span>')}
+        ${year ? `<span>◆</span><span>${year}</span>` : ''}
+      </div>
+
+      <div class="cr-rating-row">
+        <div class="cr-stars" aria-label="${score} out of 5">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+        <div class="cr-rating-divider"></div>
+        <div>Average: <strong>${score}</strong> ${m.averageScore ? '(AniList)' : ''}</div>
+      </div>
+
+      <div class="cr-actions-row">
+        <button type="button" onclick="Store.toggleFav(state.animeObj)">
+          <span class="cr-action-icon">＋</span>
+          <span>My List</span>
         </button>
-        <button class="mobile-detail-action" type="button" onclick="navigator.share ? navigator.share({title: state.animeTitle, url: location.href}).catch(()=>{}) : navigator.clipboard?.writeText(location.href)">
-          <span class="action-icon">⇧</span><span>Share</span>
+        <button type="button" onclick="navigator.share ? navigator.share({title: state.animeTitle, url: location.href}).catch(()=>{}) : navigator.clipboard?.writeText(location.href)">
+          <span class="cr-action-icon">⇧</span>
+          <span>Share</span>
         </button>
-      `;
-      const desc = details.querySelector('#watch-desc');
-      if (desc) desc.insertAdjacentElement('afterend', actions);
-      else details.appendChild(actions);
-    }
+      </div>
 
-    let more = details.querySelector('.mobile-more-details');
-    if (!more) {
-      more = document.createElement('button');
-      more.className = 'mobile-more-details';
-      more.type = 'button';
-      more.textContent = 'More Details';
-      more.onclick = () => {
-        const d = document.getElementById('watch-desc');
-        if (d) d.classList.toggle('expanded');
-        more.textContent = d?.classList.contains('expanded') ? 'Less Details' : 'More Details';
-      };
-      details.appendChild(more);
-    }
-  }
+      <div class="cr-description" id="cr-mobile-description">${desc}</div>
+      <button class="cr-more-details" type="button" id="cr-more-details">More Details</button>
+    </div>
 
-  // Crunchyroll-style mobile tabs, without changing the desktop tabs or home UI.
-  let tabs = watchView.querySelector('.mobile-anime-tabs');
-  if (!tabs) {
-    tabs = document.createElement('div');
-    tabs.className = 'mobile-anime-tabs';
-    tabs.innerHTML = `
+    <div class="cr-mobile-tabs">
       <button class="active" type="button">Episodes</button>
       <button type="button" onclick="document.getElementById('relations-wrap')?.scrollIntoView({behavior:'smooth'})">Featured Music</button>
       <button type="button" onclick="document.getElementById('recommendations-wrap')?.scrollIntoView({behavior:'smooth'})">More Like This</button>
-    `;
-    const epPanel = watchView.querySelector('.episodes-panel');
-    if (epPanel) epPanel.insertAdjacentElement('beforebegin', tabs);
+    </div>
+  `;
+
+  const epPanel = watchView.querySelector('.episodes-panel');
+  if (epPanel) epPanel.insertAdjacentElement('beforebegin', detail);
+  else watchView.appendChild(detail);
+
+  // Expand/collapse description.
+  const more = detail.querySelector('#cr-more-details');
+  const description = detail.querySelector('#cr-mobile-description');
+  if (more && description) {
+    more.onclick = () => {
+      description.classList.toggle('expanded');
+      more.textContent = description.classList.contains('expanded') ? 'Less Details' : 'More Details';
+    };
   }
 
-  // Mobile fixed CTA. It opens the first watched/current episode, otherwise episode 1.
-  let cta = watchView.querySelector('.mobile-watch-cta');
-  if (!cta) {
-    cta = document.createElement('div');
-    cta.className = 'mobile-watch-cta';
-    cta.innerHTML = `
-      <button class="mobile-watch-main" type="button">
-        <span>▷</span><strong id="mobile-watch-label">Start Watching</strong>
-      </button>
-      <button class="mobile-watch-bookmark" type="button" aria-label="Bookmark" onclick="Store.toggleFav(state.animeObj)">♡</button>
-    `;
-    watchView.appendChild(cta);
+  // The screenshot uses a vertical episode list on mobile.
+  const epGrid = document.getElementById('ep-grid');
+  if (epGrid) {
+    epGrid.classList.add('list-mode');
   }
-  const lastWatched = watched.length ? Math.max(...watched) : null;
+
+  // Add the season/episode header row only inside the mobile detail page.
+  const epHeader = watchView.querySelector('.ep-header');
+  if (epHeader && !watchView.querySelector('.cr-season-row')) {
+    const season = document.createElement('div');
+    season.className = 'cr-season-row';
+    season.innerHTML = `
+      <button type="button" class="cr-season-button">
+        <span>▼</span>
+        <strong>${title}</strong>
+        <span class="cr-season-ellipsis">⋮</span>
+      </button>
+    `;
+    epHeader.insertAdjacentElement('beforebegin', season);
+  }
+
+  // Fixed watch action exactly for the detail screen; no bottom navigation.
+  const cta = document.createElement('div');
+  cta.className = 'mobile-watch-cta';
+  cta.innerHTML = `
+    <button class="mobile-watch-main" type="button">
+      <span>▷</span><strong id="mobile-watch-label"></strong>
+    </button>
+    <button class="mobile-watch-bookmark" type="button" aria-label="Bookmark">♡</button>
+  `;
+  watchView.appendChild(cta);
+
+  const lastWatched = Array.isArray(watched) && watched.length
+    ? Math.max(...watched.map(Number).filter(Number.isFinite))
+    : null;
   const startEp = lastWatched || 1;
+
   const label = cta.querySelector('#mobile-watch-label');
-  if (label) label.textContent = lastWatched ? `Continue Watching E${startEp}` : `Start Watching E${startEp}`;
-  const main = cta.querySelector('.mobile-watch-main');
-  if (main) main.onclick = () => playEp(startEp);
+  if (label) {
+    label.textContent = lastWatched
+      ? `Continue Watching E${startEp}`
+      : `Start Watching E${startEp}`;
+  }
+
+  cta.querySelector('.mobile-watch-main').onclick = () => playEp(startEp);
+  cta.querySelector('.mobile-watch-bookmark').onclick = () => Store.toggleFav(state.animeObj);
 }
+
 
 async function openWatchView(id) {
   // 🚀 URL ROUTING: Set initial clean URL before title loads
@@ -4858,7 +5463,7 @@ async function openWatchView(id) {
   document.querySelector('.ep-search').value = ''; 
 
   const d = await alQ(`query($id:Int){Media(id:$id,type:ANIME){
-    id idMal title{romaji english} coverImage{large extraLarge} bannerImage episodes averageScore status description(asHtml:false) genres
+    id idMal title{romaji english} coverImage{large extraLarge} bannerImage episodes averageScore status description(asHtml:false) genres startDate{year}
     nextAiringEpisode { episode airingAt } 
     relations { edges { relationType node { id type format title{romaji english} coverImage{large} startDate{year} } } }
     recommendations(sort: RATING_DESC, page: 1, perPage: 12) { nodes { mediaRecommendation { id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description } } }
