@@ -1326,6 +1326,84 @@ video {
   opacity:1 !important;
 }
 </style>
+<style id="anexus-ios-player-fix">
+/* iPhone/iPad: the player itself must be allowed to occupy the full viewport. */
+.player-container:fullscreen,
+.player-container:-webkit-full-screen,
+.player-container.ios-native-fullscreen,
+.player-container.ios-video-fullscreen{
+  width:100vw !important;
+  height:100vh !important;
+  max-width:none !important;
+  max-height:none !important;
+  aspect-ratio:auto !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  background:#000 !important;
+}
+
+.player-container:fullscreen iframe,
+.player-container:-webkit-full-screen iframe,
+.player-container:fullscreen video,
+.player-container:-webkit-full-screen video,
+.player-container.ios-native-fullscreen video{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+}
+
+.player-container:-webkit-full-screen .plyr,
+.player-container:fullscreen .plyr{
+  width:100% !important;
+  height:100% !important;
+}
+
+.player-container:-webkit-full-screen .plyr__video-wrapper,
+.player-container:fullscreen .plyr__video-wrapper{
+  width:100% !important;
+  height:100% !important;
+}
+
+@supports (height: 100dvh){
+  .player-container:fullscreen,
+  .player-container:-webkit-full-screen{
+    height:100dvh !important;
+  }
+}
+
+/* iOS safe-area while the player is in browser-controlled fullscreen. */
+@supports (padding: env(safe-area-inset-top)){
+  .player-container:fullscreen .plyr__controls,
+  .player-container:-webkit-full-screen .plyr__controls{
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+.nav-category-link{
+  cursor:pointer;
+}
+.header-home-compact{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:34px;
+  height:34px;
+  border-radius:8px;
+  color:var(--muted2);
+  text-decoration:none;
+  font-size:20px;
+  line-height:1;
+}
+.header-home-compact:hover{color:var(--text);background:rgba(255,255,255,.06)}
+
+@media(max-width:900px){
+  /* Keep Home beside the header controls on smaller screens. */
+  #main-nav .header-home-btn{display:none}
+  .header-home-compact{display:flex}
+  #main-nav{display:none!important}
+}
+</style>
 </head>
 <body>
 <div id="anexus-startup" aria-label="Loading AnimeNexus"><div class="anexus-startup-logo">AnimeNexus</div></div>
@@ -1346,11 +1424,8 @@ window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
   
   <a href="index.html" class="logo" onclick="event.preventDefault(); goHome();">AnimeNexus</a>
   <nav id="main-nav">
-    <a class="active" href="index.html" onclick="event.preventDefault(); goHome();">Home</a>
-    <a href="trending.html" onclick="event.preventDefault(); goSearchView('trending', 'Trending Now');">Trending</a>
-    <a href="top-rated.html" onclick="event.preventDefault(); goSearchView('top', 'Top Rated');">Top Rated</a>
-    <a href="airing.html" onclick="event.preventDefault(); goSearchView('airing', 'Currently Airing');">Airing</a>
-    <div class="nav-indicator" id="nav-indicator" style="width: 70px; left: 0px;"></div>
+    <a class="header-home-btn active" href="index.html" onclick="event.preventDefault(); goHome();">Home</a>
+    <div class="nav-indicator" id="nav-indicator"></div>
   </nav>
   <div class="header-right">
     <div class="lang-toggle [object Object]" id="title-toggle" onclick="toggleTitleLang()">
@@ -1384,6 +1459,7 @@ window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
     </a>
   </div>
+  <a class="header-home-compact" href="index.html" onclick="event.preventDefault(); goHome();" aria-label="Home">⌂</a>
 </header>
 
 <div id="toast"></div>
@@ -1480,6 +1556,8 @@ window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
 
   <div class="genre-filters" id="genre-filters">
     <div class="filter-chip active" onclick="filterGenre('')">All</div>
+    <div class="filter-chip nav-category-link" onclick="goSearchView('trending','Trending Now')">Trending</div>
+    <div class="filter-chip nav-category-link" onclick="goSearchView('top','Top Rated')">Top Rated</div>
     <div class="filter-chip" onclick="filterGenre('Action')">Action</div>
     <div class="filter-chip" onclick="filterGenre('Romance')">Romance</div>
     <div class="filter-chip" onclick="filterGenre('Comedy')">Comedy</div>
@@ -4870,7 +4948,7 @@ async function playEp(ep) {
   } 
   else {
       const url = PROVIDERS[state.provider].url(state.malId, ep, state.lang);
-      playerWrap.innerHTML = `<iframe src="${url}" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:100%;border:none;"></iframe>`;
+      playerWrap.innerHTML = `<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen style="width:100%;height:100%;border:none;"></iframe>`;
   }
   
   const h=Store.get('otaku_hist'); const eps=h[state.malId]?.eps||[]; if(!eps.includes(ep)) eps.push(ep);
@@ -6328,7 +6406,6 @@ KageWatchAnalytics.init();
     const video = getVideo(player);
     if(!video) return;
 
-    // iOS needs these attributes kept on the actual media element.
     video.setAttribute('playsinline','');
     video.setAttribute('webkit-playsinline','');
     video.playsInline = true;
@@ -6338,62 +6415,103 @@ KageWatchAnalytics.init();
 
     button.dataset.iosFullscreenStable = '1';
 
-    button.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+    const isiPhone = /iPhone|iPod/i.test(navigator.userAgent);
+    const isiPad = /iPad/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-      const active =
-        !!video.webkitDisplayingFullscreen ||
-        !!document.fullscreenElement ||
+    function isNativeFullscreen(){
+      return !!video.webkitDisplayingFullscreen;
+    }
+
+    function isStandardFullscreen(){
+      return !!document.fullscreenElement ||
         !!document.webkitFullscreenElement;
+    }
 
-      try {
-        if(active){
-          if(typeof video.webkitExitFullscreen === 'function' && video.webkitDisplayingFullscreen){
-            video.webkitExitFullscreen();
-          } else if(document.exitFullscreen){
-            document.exitFullscreen().catch(()=>{});
-          } else if(document.webkitExitFullscreen){
-            document.webkitExitFullscreen();
-          }
+    function exitFullscreen(){
+      try{
+        if(isNativeFullscreen() && typeof video.webkitExitFullscreen === 'function'){
+          video.webkitExitFullscreen();
+          return;
+        }
+        if(document.fullscreenElement && document.exitFullscreen){
+          const p=document.exitFullscreen();
+          if(p && p.catch) p.catch(()=>{});
+          return;
+        }
+        if(document.webkitFullscreenElement && document.webkitExitFullscreen){
+          document.webkitExitFullscreen();
+        }
+      }catch(_){}
+    }
+
+    function enterFullscreen(){
+      try{
+        /*
+         * iPhone Safari is most reliable when the actual <video>
+         * enters Apple's native fullscreen rather than asking the
+         * containing div to fullscreen.
+         */
+        if(isiPhone && typeof video.webkitEnterFullscreen === 'function'){
+          video.webkitEnterFullscreen();
           return;
         }
 
-        // iPadOS/Safari may expose the standard Fullscreen API.
-        if(container.requestFullscreen){
-          const p = container.requestFullscreen();
-          if(p && typeof p.catch === 'function'){
-            p.catch(function(){
-              if(typeof video.webkitEnterFullscreen === 'function'){
+        /*
+         * iPadOS Safari supports the standard Fullscreen API for
+         * containers. This keeps the Plyr controls inside fullscreen.
+         */
+        if(typeof container.requestFullscreen === 'function'){
+          const p=container.requestFullscreen({navigationUI:'hide'});
+          if(p && typeof p.catch==='function'){
+            p.catch(()=>{
+              if(typeof video.webkitEnterFullscreen==='function'){
                 video.webkitEnterFullscreen();
               }
             });
           }
-        } else if(video.webkitEnterFullscreen){
-          // iPhone Safari's reliable native fullscreen path.
+          return;
+        }
+
+        if(typeof video.webkitEnterFullscreen==='function'){
           video.webkitEnterFullscreen();
         }
-      }catch(err){
+      }catch(_){
         try{
-          if(typeof video.webkitEnterFullscreen === 'function'){
+          if(typeof video.webkitEnterFullscreen==='function'){
             video.webkitEnterFullscreen();
           }
-        }catch(_){}
+        }catch(__){}
       }
-    }, true);
-
-    function sync(){
-      const native = !!video.webkitDisplayingFullscreen;
-      const standard = !!document.fullscreenElement || !!document.webkitFullscreenElement;
-      container.classList.toggle('ios-native-fullscreen', native || standard);
-      container.classList.toggle('ios-video-fullscreen', native);
     }
 
-    video.addEventListener('webkitbeginfullscreen', sync);
-    video.addEventListener('webkitendfullscreen', sync);
-    document.addEventListener('fullscreenchange', sync);
-    document.addEventListener('webkitfullscreenchange', sync);
+    button.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      if(isNativeFullscreen() || isStandardFullscreen()){
+        exitFullscreen();
+      }else{
+        enterFullscreen();
+      }
+    },true);
+
+    function sync(){
+      const active=isNativeFullscreen() || isStandardFullscreen();
+      container.classList.toggle('ios-native-fullscreen',active);
+      container.classList.toggle('ios-video-fullscreen',isNativeFullscreen());
+    }
+
+    video.addEventListener('webkitbeginfullscreen',sync);
+    video.addEventListener('webkitendfullscreen',sync);
+    document.addEventListener('fullscreenchange',sync);
+    document.addEventListener('webkitfullscreenchange',sync);
+
+    /* Re-sync after orientation changes and iOS viewport changes. */
+    window.addEventListener('orientationchange',()=>setTimeout(sync,150));
+    window.addEventListener('resize',sync);
+
     sync();
   }
 
