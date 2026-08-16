@@ -994,6 +994,36 @@ header, header.scrolled,
 }
 </style>
 
+
+<style id="hd-catalog-images">
+.a-card-img,
+.cw-card img,
+.anime-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  image-rendering: auto;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Higher-density displays get the full-resolution source instead of
+   being visually softened by browser image rendering. */
+@media (min-resolution: 2dppx) {
+  .a-card-img,
+  .cw-card img,
+  .anime-card img {
+    image-rendering: auto;
+  }
+}
+</style>
+
+
+<link rel="preconnect" href="https://s4.anilist.co" crossorigin>
+<link rel="dns-prefetch" href="//s4.anilist.co">
+
 </head>
 <body>
 
@@ -3725,7 +3755,7 @@ function renderCardContents(el, a, index) {
   const score = a.averageScore ? `<div class="a-card-score">⭐ ${(a.averageScore/10).toFixed(1)}</div>` : '';
   const live = a.status === 'RELEASING' ? `<div class="live-badge"><div class="dot"></div>Live</div>` : '';
   const isFav = Store.isFav(a.id);
-  const bannerBg = a.bannerImage || a.coverImage.extraLarge || a.coverImage.large;
+  const bannerBg = a.bannerImage || a.coverImage.extraLarge || a.coverImage.extraLarge;
   
   const totalEps = a.episodes || '?';
   const fakeDub = totalEps !== '?' && totalEps > 2 ? totalEps - 2 : totalEps;
@@ -3759,7 +3789,7 @@ function renderCardContents(el, a, index) {
   
   el.innerHTML = `
     <div class="a-card-img-wrap">
-      <img class="a-card-img" src="${a.coverImage.large}" loading="lazy" decoding="async" alt="Watch ${getTitle(a.title)} online">
+      <img class="a-card-img" src="${a.coverImage.extraLarge}" loading="lazy" decoding="async" alt="Watch ${getTitle(a.title)} online">
       <div class="a-card-overlay"><div class="a-card-play">▶</div></div>
       ${score} ${live} ${subDubBadges}
     </div>
@@ -3803,8 +3833,8 @@ function buildHero(list){
   cont.innerHTML = ''; dotsEl.innerHTML = '';
   
   if (list.length > 0) {
-    const firstBanner = list[0].bannerImage || list[0].coverImage.extraLarge || list[0].coverImage.large;
-    const firstCover = list[0].coverImage.extraLarge || list[0].coverImage.large;
+    const firstBanner = list[0].bannerImage || list[0].coverImage.extraLarge || list[0].coverImage.extraLarge;
+    const firstCover = list[0].coverImage.extraLarge || list[0].coverImage.extraLarge;
     
     if (firstBanner) {
       const linkB = document.createElement('link');
@@ -3826,8 +3856,8 @@ function buildHero(list){
     const slide=document.createElement('div');
     slide.className='hero-slide'+(i===0?' active':'');
     
-    const bannerUrl = a.bannerImage || a.coverImage.extraLarge || a.coverImage.large;
-    const coverUrl = a.coverImage.extraLarge || a.coverImage.large;
+    const bannerUrl = a.bannerImage || a.coverImage.extraLarge || a.coverImage.extraLarge;
+    const coverUrl = a.coverImage.extraLarge || a.coverImage.extraLarge;
     
     slide.innerHTML=`
       <div class="hero-bg" ${i === 0 ? `style="background-image:url('${bannerUrl}')"` : `data-bg="${bannerUrl}"`}></div>
@@ -4047,7 +4077,7 @@ async function openWatchView(id) {
   }}`, {id});
   
   const m = d.Media;
-  state = { anilistId:m.id, malId:m.idMal, currentEp:null, provider:'AnimeNexus', lang:'sub', totalEps: m.episodes || (m.nextAiringEpisode ? m.nextAiringEpisode.episode - 1 : 12), animeTitle: getTitle(m.title), animeCover: m.coverImage.large, animeObj: m };
+  state = { anilistId:m.id, malId:m.idMal, currentEp:null, provider:'AnimeNexus', lang:'sub', totalEps: m.episodes || (m.nextAiringEpisode ? m.nextAiringEpisode.episode - 1 : 12), animeTitle: getTitle(m.title), animeCover: m.coverImage.extraLarge, animeObj: m };
   
   // 🚀 URL ROUTING: Update the URL with the proper SEO title
   const urlTitle = getTitle(m.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -4064,14 +4094,14 @@ async function openWatchView(id) {
   if(ogTitle) {
       ogTitle.setAttribute("content", `${getTitle(m.title)} - Watch on AnimeNexus`);
       document.querySelector('meta[property="og:description"]').setAttribute("content", `${getTitle(m.title)} anime episodes online in HD. Watch subbed and dubbed anime free on AnimeNexus.`);
-      document.querySelector('meta[property="og:image"]').setAttribute("content", m.coverImage.extraLarge || m.coverImage.large);
+      document.querySelector('meta[property="og:image"]').setAttribute("content", m.coverImage.extraLarge || m.coverImage.extraLarge);
   }
 
   document.getElementById('lang-sub').classList.add('active');
   document.getElementById('lang-dub').classList.remove('active');
   document.getElementById('bc-title').textContent = getTitle(m.title);
   document.getElementById('watch-title').textContent = getTitle(m.title);
-  document.getElementById('watch-cover').src = m.coverImage.large;
+  document.getElementById('watch-cover').src = m.coverImage.extraLarge;
   document.getElementById('watch-desc').textContent = m.description ? m.description.replace(/<[^>]*>/g,'').slice(0,250)+'...' : 'No description available.';
   
   const tags=document.getElementById('watch-tags'); tags.innerHTML='';
@@ -4125,7 +4155,7 @@ async function openWatchView(id) {
         card.href = `/watch/${node.id}/${toSlug(title)}`;
         card.addEventListener('click', (e) => { e.preventDefault(); openWatchView(node.id); });
         card.innerHTML = `
-          <img class="rel-img" src="${node.coverImage.large}" loading="lazy" alt="Watch ${title}">
+          <img class="rel-img" src="${node.coverImage.extraLarge}" loading="lazy" alt="Watch ${title}">
           <div class="rel-info">
             <div class="rel-title" title="${title}">${title}</div>
             <div class="rel-meta"><span>${year}</span><span class="rel-badge">${badge}</span></div>
