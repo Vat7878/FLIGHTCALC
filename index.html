@@ -1234,20 +1234,6 @@ header, header.scrolled,
 .a-card[data-anime-id="21"] .a-card-img { object-fit: cover; }
 </style>
 
-
-<style id="ios-fullscreen-stability">
-video {
-  -webkit-user-select: none;
-  user-select: none;
-}
-.ios-native-fullscreen video,
-.ios-video-fullscreen video {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-}
-</style>
-
 </head>
 <body>
 
@@ -6092,11 +6078,7 @@ KageWatchAnalytics.init();
 
     let timer;
     box.addEventListener("click", function (e) {
-      const nativeIOSFullscreen =
-        !!player.media?.webkitDisplayingFullscreen ||
-        !!document.fullscreenElement ||
-        !!document.webkitFullscreenElement;
-      if (!nativeIOSFullscreen && (!player.fullscreen || !player.fullscreen.active)) return;
+      if (!player.fullscreen || !player.fullscreen.active) return;
       if (e.target.closest(".plyr__controls,.plyr__control,.plyr__menu")) return;
 
       const r = box.getBoundingClientRect();
@@ -6132,107 +6114,40 @@ KageWatchAnalytics.init();
 
 <script id="ios-fullscreen-fix">
 (function(){
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-  if (!isIOS) return;
-
-  function getVideo(player){
-    return player && (player.media || player.elements?.container?.querySelector('video'));
+  function ios(){
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   }
-
   function install(player){
-    if(!player || !player.elements || !player.elements.container) return;
-
-    const container = player.elements.container;
-    const video = getVideo(player);
-    if(!video) return;
-
-    // iOS needs these attributes kept on the actual media element.
-    video.setAttribute('playsinline','');
-    video.setAttribute('webkit-playsinline','');
-    video.playsInline = true;
-
-    const button = container.querySelector('.plyr__control[data-plyr="fullscreen"]');
-    if(!button || button.dataset.iosFullscreenStable === '1') return;
-
-    button.dataset.iosFullscreenStable = '1';
-
-    button.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      const active =
-        !!video.webkitDisplayingFullscreen ||
-        !!document.fullscreenElement ||
-        !!document.webkitFullscreenElement;
-
-      try {
-        if(active){
-          if(typeof video.webkitExitFullscreen === 'function' && video.webkitDisplayingFullscreen){
-            video.webkitExitFullscreen();
-          } else if(document.exitFullscreen){
-            document.exitFullscreen().catch(()=>{});
-          } else if(document.webkitExitFullscreen){
-            document.webkitExitFullscreen();
-          }
-          return;
+    if(!ios()||!player||!player.elements||!player.elements.container)return;
+    const v=player.media,c=player.elements.container;
+    if(!v||typeof v.webkitEnterFullscreen!=='function'||c.dataset.iosFsStable==='1')return;
+    const b=c.querySelector('.plyr__control[data-plyr="fullscreen"]');
+    if(!b)return;
+    c.dataset.iosFsStable='1';
+    b.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+      try{
+        if(v.webkitDisplayingFullscreen){
+          if(typeof v.webkitExitFullscreen==='function')v.webkitExitFullscreen();
+        }else{
+          v.webkitEnterFullscreen();
         }
-
-        // iPadOS/Safari may expose the standard Fullscreen API.
-        if(container.requestFullscreen){
-          const p = container.requestFullscreen();
-          if(p && typeof p.catch === 'function'){
-            p.catch(function(){
-              if(typeof video.webkitEnterFullscreen === 'function'){
-                video.webkitEnterFullscreen();
-              }
-            });
-          }
-        } else if(video.webkitEnterFullscreen){
-          // iPhone Safari's reliable native fullscreen path.
-          video.webkitEnterFullscreen();
-        }
-      }catch(err){
-        try{
-          if(typeof video.webkitEnterFullscreen === 'function'){
-            video.webkitEnterFullscreen();
-          }
-        }catch(_){}
-      }
-    }, true);
-
-    function sync(){
-      const native = !!video.webkitDisplayingFullscreen;
-      const standard = !!document.fullscreenElement || !!document.webkitFullscreenElement;
-      container.classList.toggle('ios-native-fullscreen', native || standard);
-      container.classList.toggle('ios-video-fullscreen', native);
-    }
-
-    video.addEventListener('webkitbeginfullscreen', sync);
-    video.addEventListener('webkitendfullscreen', sync);
-    document.addEventListener('fullscreenchange', sync);
-    document.addEventListener('webkitfullscreenchange', sync);
-    sync();
+      }catch(err){console.warn('iOS fullscreen request failed:',err);}
+    },true);
+    v.addEventListener('webkitbeginfullscreen',()=>c.classList.add('ios-native-fullscreen'));
+    v.addEventListener('webkitendfullscreen',()=>c.classList.remove('ios-native-fullscreen'));
   }
-
-  function scan(){
-    if(window.activePlyrInstance) install(window.activePlyrInstance);
-    document.querySelectorAll('.plyr').forEach(function(el){
-      if(el.plyr) install(el.plyr);
-    });
-  }
-
-  scan();
-  const observer = new MutationObserver(scan);
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-
-  const timer=setInterval(scan,500);
-  setTimeout(function(){
-    clearInterval(timer);
-    observer.disconnect();
-  },60000);
+  const obs=new MutationObserver(()=>{
+    if(window.activePlyrInstance)install(window.activePlyrInstance);
+    document.querySelectorAll('.plyr').forEach(x=>{if(x.plyr)install(x.plyr);});
+  });
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+  const t=setInterval(()=>{
+    if(window.activePlyrInstance)install(window.activePlyrInstance);
+    document.querySelectorAll('.plyr').forEach(x=>{if(x.plyr)install(x.plyr);});
+  },250);
+  setTimeout(()=>{clearInterval(t);obs.disconnect();},60000);
 })();
 </script>
 
