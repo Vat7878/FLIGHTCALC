@@ -1326,7 +1326,11 @@ video {
 .player-back{display:none;align-items:center;gap:8px;width:max-content;margin:0 0 14px;border:1px solid #222;background:#0b0b0b;color:#aaa;padding:8px 12px;border-radius:0;cursor:pointer;font-size:.78rem;font-weight:700}
 #watch-view.player-mode .player-back{display:flex}
 #watch-view.player-mode .player-back:hover{color:#fff;border-color:#6495ED}
+.catalog-row{padding-top:32px}
+.catalog-row .h-scroll{scroll-behavior:smooth}
 @media(max-width:700px){
+  .catalog-row{padding-top:26px}
+
   #anime-landing{margin-left:-12px;margin-right:-12px;padding-bottom:28px}
   #anime-landing .landing-hero{height:clamp(650px,86svh,820px);min-height:650px;max-height:820px}
   #anime-landing .landing-hero img{object-position:center 16%;}
@@ -3171,6 +3175,56 @@ window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
     </div></a></div>
     </section>
 
+
+    <!-- Additional discovery catalogs -->
+    <section class="strip-section catalog-row" id="action-section">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Action Hits</div>
+        <span class="see-all" onclick="goGenreView('Action','Action Hits')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
+      </div>
+      <div class="h-scroll" id="strip-action"></div>
+    </section>
+
+    <section class="strip-section catalog-row" id="fantasy-section">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Fantasy Worlds</div>
+        <span class="see-all" onclick="goGenreView('Fantasy','Fantasy Worlds')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
+      </div>
+      <div class="h-scroll" id="strip-fantasy"></div>
+    </section>
+
+    <section class="strip-section catalog-row" id="adventure-section">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Adventure Picks</div>
+        <span class="see-all" onclick="goGenreView('Adventure','Adventure Picks')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
+      </div>
+      <div class="h-scroll" id="strip-adventure"></div>
+    </section>
+
+    <section class="strip-section catalog-row" id="comedy-section">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Comedy Favorites</div>
+        <span class="see-all" onclick="goGenreView('Comedy','Comedy Favorites')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
+      </div>
+      <div class="h-scroll" id="strip-comedy"></div>
+    </section>
+
+    <section class="strip-section catalog-row" id="drama-section">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Drama Spotlight</div>
+        <span class="see-all" onclick="goGenreView('Drama','Drama Spotlight')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
+      </div>
+      <div class="h-scroll" id="strip-drama"></div>
+    </section>
+
+    <section class="strip-section catalog-row" id="romance-section" style="padding-bottom:20px">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Romance Favorites</div>
+        <span class="see-all" onclick="goGenreView('Romance','Romance Favorites')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
+      </div>
+      <div class="h-scroll" id="strip-romance"></div>
+    </section>
+    
     <section class="schedule-section" id="schedule-section">
       <div class="schedule-header">
         <h2>Estimated Schedule <span class="schedule-time" id="realtime-clock">- Now: 7/6/2026 10:37:55 AM</span></h2>
@@ -4107,6 +4161,19 @@ async function executeAdvancedFilter() {
 }
 
 // --- ORIGINAL SEARCH & QUICK FILTER LOGIC ---
+async function goGenreView(genre, label) {
+  document.getElementById('sv-title').textContent = label || genre;
+  document.getElementById('sv-subtitle').textContent = `Popular ${genre} anime`;
+  closeFilterPanel();
+  showView('search-view');
+  showSearchSkeleton();
+  document.title = `${label || genre} Anime - AnimeNexus`;
+
+  const d = await alQ(`query($g:String){Page(perPage:40){media(genre:$g,sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`, {g: genre});
+  fillSearchView(d?.Page?.media || []);
+  document.querySelector('meta[name="description"]').setAttribute('content', `Watch ${genre} anime online free on AnimeNexus.`);
+}
+
 async function goSearchView(type, label, subtitle) {
   document.getElementById('sv-title').textContent = label || 'Results';
   document.getElementById('sv-subtitle').textContent = subtitle || '';
@@ -5447,11 +5514,17 @@ function scrollDates(dir) {
     
   await initialWatchPromise;
 
-  const [trending, airing, top, finished] = await Promise.all([
+  const [trending, airing, top, finished, action, fantasy, adventure, comedy, drama, romance] = await Promise.all([
     alQ(`query{Page(perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:POPULARITY_DESC,type:ANIME,status:RELEASING,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:SCORE_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(sort:END_DATE_DESC,type:ANIME,status:FINISHED,format:TV,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
+    alQ(`query{Page(perPage:20){media(sort:END_DATE_DESC,type:ANIME,status:FINISHED,format:TV,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Action",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Fantasy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Adventure",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Comedy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Drama",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Romance",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
   ]);
   
   const tList=trending?.Page?.media||[];
@@ -5460,6 +5533,12 @@ function scrollDates(dir) {
   fillStrip('strip-airing', airing?.Page?.media||[]);
   fillStrip('strip-finished', finished?.Page?.media||[]);
   fillStrip('strip-top', top?.Page?.media||[]);
+  fillStrip('strip-action', action?.Page?.media||[]);
+  fillStrip('strip-fantasy', fantasy?.Page?.media||[]);
+  fillStrip('strip-adventure', adventure?.Page?.media||[]);
+  fillStrip('strip-comedy', comedy?.Page?.media||[]);
+  fillStrip('strip-drama', drama?.Page?.media||[]);
+  fillStrip('strip-romance', romance?.Page?.media||[]);
 
   if (window.__animeNexusStartupReady) window.__animeNexusStartupReady();
   
