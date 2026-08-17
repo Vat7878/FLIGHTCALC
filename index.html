@@ -3812,11 +3812,29 @@ function continueWithLang(lang){
   if(state.currentEp) playEp(state.currentEp,{autoFullscreen:pendingAutoFullscreen,resumeTime:pendingResumeTime});
 }
 function continueWithSub(){ continueWithLang('sub'); }
+async function lockPlayerLandscape(){
+  try{
+    const orientation=screen?.orientation;
+    if(orientation?.lock){
+      await orientation.lock('landscape');
+      return true;
+    }
+  }catch(_){}
+  return false;
+}
+function unlockPlayerLandscape(){
+  try{
+    const orientation=screen?.orientation;
+    if(orientation?.unlock) orientation.unlock();
+  }catch(_){}
+}
 function enterAnexusWebFullscreen(player){
   const box=player?.elements?.container;
   if(!box) return false;
   box.classList.add('anexus-web-fullscreen');
   document.body.classList.add('anexus-player-fullscreen');
+  // Keep the player landscape whenever the browser permits orientation locking.
+  lockPlayerLandscape();
   return true;
 }
 function exitAnexusWebFullscreen(player){
@@ -3824,6 +3842,7 @@ function exitAnexusWebFullscreen(player){
   if(box) box.classList.remove('anexus-web-fullscreen');
   document.body.classList.remove('anexus-player-fullscreen');
   document.getElementById('watch-view')?.classList.remove('anexus-direct-player');
+  unlockPlayerLandscape();
 }
 function toggleAnexusFullscreen(player){
   const box=player?.elements?.container;
@@ -4897,12 +4916,14 @@ function requestAndroidWebFullscreenFromGesture(target){
   const isAndroid=/Android/i.test(navigator.userAgent||'');
   if(!isAndroid) return false;
   const candidates=[];
+  if(target && typeof target.requestFullscreen==='function') candidates.push(target);
   const root=document.documentElement;
-  if(root && typeof root.requestFullscreen==='function') candidates.push(root);
-  if(target && typeof target.requestFullscreen==='function' && target!==root) candidates.push(target);
+  if(root && typeof root.requestFullscreen==='function' && target!==root) candidates.push(root);
   for(const el of candidates){
     try{
       const p=el.requestFullscreen({navigationUI:'hide'});
+      // Request landscape while the episode tap still has fullscreen activation.
+      lockPlayerLandscape();
       if(p && typeof p.catch==='function') p.catch(()=>{});
       return true;
     }catch(_){}
@@ -4947,6 +4968,7 @@ function showEpisodePlayer(ep,opts={}){
     document.body.classList.add('anexus-player-fullscreen');
     const existingBox=view.querySelector('.player-container');
     if(existingBox) existingBox.classList.add('anexus-web-fullscreen');
+    lockPlayerLandscape();
   }
   pendingResumeTime=opts.resumeTime!=null ? Number(opts.resumeTime)||0 : null;
   pendingAutoFullscreen=opts.autoFullscreen!==false;
@@ -5482,7 +5504,6 @@ function injectPlayerMenu(player){
       <div class="anexus-menu-row" data-streams></div>
       <div class="anexus-menu-actions">
         <button type="button" class="anexus-episodes-btn" data-episodes>⋮ Episodes &amp; Anime</button>
-        <button type="button" class="anexus-minimize-btn" data-minimize>↓ Minimize</button>
       </div>
     </div>`;
   box.appendChild(menu);
@@ -5499,14 +5520,6 @@ function injectPlayerMenu(player){
   const closeMenu=()=>menu.classList.remove('open');
   menu.querySelector('[data-close]').addEventListener('click',(e)=>{
     e.preventDefault(); e.stopPropagation(); closeMenu();
-  });
-  menu.querySelector('[data-minimize]').addEventListener('pointerup',(e)=>{
-    e.preventDefault(); e.stopPropagation();
-    closeMenu();
-    // Exit the AnimeNexus player and return to this anime's detail/hero page.
-    setTimeout(()=>{
-      try { minimizePlayerToOptions(); } catch (_) { try { backToAnimeLanding(); } catch(__) {} }
-    }, 0);
   });
   renderPlayerStreamChoices(menu);
   syncPlayerMenuState(menu);
@@ -7001,30 +7014,51 @@ KageWatchAnalytics.init();
 
 
 
-<script id="ios-fullscreen-fix">
+<script id="anexus-unified-close-player-control">
 (function(){
-  // iPhone/iPad: keep Plyr/AnimeNexus as the player. Never call webkitEnterFullscreen().
-  // All platforms use the same AnimeNexus/Plyr fullscreen shell.
-  const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  const install=()=>{
-    document.querySelectorAll('.plyr').forEach(el=>{
-      const player=el.plyr;
-      if(!player || !player.elements?.container) return;
-      const btn=player.elements.container.querySelector('.plyr__control[data-plyr="fullscreen"]');
-      if(!btn || btn.dataset.anexusWebFullscreen==='1') return;
-      btn.dataset.anexusWebFullscreen='1';
-      btn.addEventListener('click',e=>{
-        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        toggleAnexusFullscreen(player);
-      },true);
-    });
-  };
-  setInterval(install,700);
-  document.addEventListener('fullscreenchange',()=>{
-    if(document.fullscreenElement) document.exitFullscreen?.().catch?.(()=>{});
-  });
-  document.addEventListener('webkitfullscreenchange',()=>{
-    if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+  'use strict';
+
+  function decorateButton(btn){
+    if(!btn || btn.dataset.anexusClosePlayer==='1') return;
+    btn.dataset.anexusClosePlayer='1';
+    btn.setAttribute('aria-label','Exit player');
+    btn.setAttribute('title','Exit player');
+    btn.innerHTML='<span class="anexus-corner-x" aria-hidden="true">×</span>';
+  }
+
+  function scan(){
+    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(decorateButton);
+  }
+
+  function closePlayer(e){
+    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
+    if(!btn || btn.dataset.anexusClosePlayer!=='1') return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+    try{
+      const menu=btn.closest('.plyr')?.querySelector('.anexus-player-menu');
+      menu?.classList.remove('open');
+    }catch(_){}
+    try{
+      minimizePlayerToOptions();
+    }catch(_){
+      try{ backToAnimeLanding(); }catch(__){}
+    }
+  }
+
+  document.addEventListener('pointerdown',closePlayer,true);
+  document.addEventListener('click',closePlayer,true);
+  document.addEventListener('touchend',closePlayer,true);
+  document.addEventListener('DOMContentLoaded',scan);
+  setInterval(scan,500);
+
+  // If the browser rotates back to portrait, retry the landscape lock while
+  // the player remains active. This is especially useful on Android.
+  window.addEventListener('orientationchange',()=>{
+    if(document.body.classList.contains('anexus-player-fullscreen')){
+      setTimeout(()=>lockPlayerLandscape(),80);
+    }
   });
 })();
 </script>
@@ -7055,23 +7089,7 @@ KageWatchAnalytics.init();
 <style id="anexus-minimize-final-fix">
 .anexus-player-menu .anexus-minimize-btn{position:relative!important;z-index:2147483648!important;pointer-events:auto!important;touch-action:manipulation!important;}
 </style>
-<script id="anexus-minimize-final-fix-script">
-(function(){
-  function handle(e){
-    const btn=e.target.closest && e.target.closest('.anexus-player-menu [data-minimize]');
-    if(!btn) return;
-    e.preventDefault(); e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    try{ btn.closest('.anexus-player-menu')?.querySelector('.anexus-menu-close')?.click(); }catch(_){ }
-    setTimeout(function(){
-      try{ minimizePlayerToOptions(); }catch(_){ try{ backToAnimeLanding(); }catch(__){} }
-    },20);
-  }
-  document.addEventListener('pointerdown',handle,true);
-  document.addEventListener('click',handle,true);
-  document.addEventListener('touchend',handle,true);
-})();
-</script>
+
 
 
 
@@ -7108,6 +7126,21 @@ KageWatchAnalytics.init();
 #watch-view:fullscreen .plyr__video-wrapper,
 #watch-view:-webkit-full-screen .plyr__video-wrapper{height:100%!important;}
 </style>
+<style id="anexus-android-fullscreen-state-fix">
+/* Real Android browser fullscreen: keep the web player edge-to-edge. */
+html:fullscreen,
+html:-webkit-full-screen {
+  width:100% !important;
+  height:100% !important;
+  background:#000 !important;
+}
+body.anexus-player-fullscreen {
+  width:100% !important;
+  min-height:100% !important;
+  margin:0 !important;
+  background:#000 !important;
+}
+</style>
 <script id="anexus-android-fullscreen-gesture-bridge">
 (function(){
   'use strict';
@@ -7119,43 +7152,34 @@ KageWatchAnalytics.init();
   },{capture:true,passive:true});
 })();
 </script>
-<script id="anexus-android-real-fullscreen-final-script">
-(function(){
-  'use strict';
-  const isAndroid=/Android/i.test(navigator.userAgent||'');
-  if(!isAndroid) return;
 
-  // The episode tap starts showEpisodePlayer(), which requests real fullscreen
-  // synchronously. Keep fullscreen state classes synchronized afterward.
-  function sync(){
-    const v=document.getElementById('watch-view');
-    const active=!!document.fullscreenElement;
-    if(active){
-      document.body.classList.add('anexus-player-fullscreen');
-      v?.classList.add('anexus-direct-player');
-    }
+<style id="anexus-corner-x-final">
+/* The episode always opens fullscreen; the corner control is now a simple X. */
+.plyr__control[data-plyr="fullscreen"]{
+  min-width:38px!important;
+  min-height:38px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.plyr__control[data-plyr="fullscreen"] .anexus-corner-x{
+  display:block!important;
+  font-family:Arial,sans-serif!important;
+  font-size:32px!important;
+  font-weight:300!important;
+  line-height:1!important;
+  color:#fff!important;
+  transform:translateY(-1px);
+  pointer-events:none!important;
+}
+.anexus-player-menu .anexus-minimize-btn{display:none!important;}
+@media (orientation:portrait) and (max-width:1000px){
+  body.anexus-player-fullscreen .anexus-web-fullscreen,
+  body.anexus-player-fullscreen #watch-view{
+    background:#000!important;
   }
-  document.addEventListener('fullscreenchange',sync);
-
-  // The existing Plyr corner fullscreen control becomes the user's minimize
-  // control while the real Android fullscreen surface is active.
-  function corner(e){
-    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
-    if(!btn) return;
-    const v=document.getElementById('watch-view');
-    if(!v) return;
-    const active=!!document.fullscreenElement || v.classList.contains('anexus-web-fullscreen') || document.body.classList.contains('anexus-player-fullscreen');
-    if(!active) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation?.();
-    try{ minimizePlayerToOptions(); }catch(_){ try{ backToAnimeLanding(); }catch(__){} }
-  }
-  document.addEventListener('pointerdown',corner,true);
-  document.addEventListener('click',corner,true);
-  document.addEventListener('touchend',corner,true);
-})();
-</script>
+}
+</style>
 </body>
 </html><style id="anexus-hero-true-fit">
 /* Homepage Spotlight: fit the real AniList banner to the viewport width. Never crop/zoom it. */
