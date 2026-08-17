@@ -6948,66 +6948,7 @@ KageWatchAnalytics.init();
   setTimeout(()=>clearInterval(timer),30000);
 })();
 </script>
-<script id="custom-center-player">
-(function () {
-  function attach(player) {
-    if (!player || !player.elements || !player.elements.container) return;
-    const box = player.elements.container;
-    if (box.dataset.centerToggleReady === "1") return;
-    box.dataset.centerToggleReady = "1";
 
-    const feedback = document.createElement("div");
-    feedback.style.cssText =
-      "position:absolute;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;" +
-      "border-radius:50%;display:flex;align-items:center;justify-content:center;" +
-      "background:rgba(10,12,22,.65);border:1px solid rgba(255,255,255,.18);" +
-      "box-shadow:0 10px 35px rgba(0,0,0,.45);color:#fff;font-size:28px;" +
-      "opacity:0;transform:scale(.78);pointer-events:none;z-index:30;" +
-      "transition:opacity .18s ease,transform .18s ease;";
-    box.appendChild(feedback);
-
-    let timer;
-    box.addEventListener("click", function (e) {
-      const nativeIOSFullscreen =
-        !!player.media?.webkitDisplayingFullscreen ||
-        !!document.fullscreenElement ||
-        !!document.webkitFullscreenElement;
-      const animeNexusFullscreen = document.body.classList.contains('anexus-player-fullscreen') || box.classList.contains('anexus-web-fullscreen') || document.getElementById('watch-view')?.classList.contains('anexus-direct-player');
-      if (!nativeIOSFullscreen && !animeNexusFullscreen && (!player.fullscreen || !player.fullscreen.active)) return;
-      if (e.target.closest('.plyr__controls,.plyr__control,.plyr__menu,.anexus-player-menu')) return;
-
-      const r = box.getBoundingClientRect();
-      const x = e.clientX - r.left, y = e.clientY - r.top;
-      if (x < r.width*.27 || x > r.width*.73 ||
-          y < r.height*.25 || y > r.height*.75) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      // A center tap both reveals the player controls and toggles playback.
-      // This makes Settings/Minimize reachable again on iPhone/iPad fullscreen.
-      try { if(typeof player.toggleControls === 'function') player.toggleControls(true); } catch(_) {}
-      player.togglePlay();
-
-      feedback.textContent = player.playing ? "▶" : "❚❚";
-      feedback.style.opacity = "1";
-      feedback.style.transform = "scale(1)";
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        feedback.style.opacity = "0";
-        feedback.style.transform = "scale(1.06)";
-      }, 500);
-    }, true);
-  }
-
-  const timer = setInterval(function () {
-    if (window.activePlyrInstance) attach(window.activePlyrInstance);
-    document.querySelectorAll(".plyr").forEach(function (el) {
-      if (el.plyr) attach(el.plyr);
-    });
-  }, 500);
-  setTimeout(function () { clearInterval(timer); }, 30000);
-})();
-</script>
 
 
 <script id="ios-fullscreen-fix">
@@ -7082,119 +7023,8 @@ KageWatchAnalytics.init();
 })();
 </script>
 
-<style id="anexus-final-center-and-fullscreen-button-fix">
-/* Final interaction fix: the video center toggles exactly once, and Plyr's own
-   fullscreen/minimize control toggles the AnimeNexus fullscreen shell. */
-.anexus-web-fullscreen .plyr__control[data-plyr="fullscreen"],
-.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]{
-  pointer-events:auto!important;
-  z-index:2147483649!important;
-  touch-action:manipulation!important;
-}
-.anexus-center-play-feedback{pointer-events:none!important;}
-</style>
-<script id="anexus-final-center-and-fullscreen-button-fix-script">
-(function(){
-  let suppressNextClickUntil=0;
-  let suppressFullscreenClickUntil=0;
 
-  function playerForBox(box){
-    return box?.plyr || window.activePlyrInstance || window.player || null;
-  }
 
-  function toggleOurFullscreen(player){
-    if(!player) return;
-    try { toggleAnexusFullscreen(player); } catch(_) {
-      try {
-        const box=player.elements?.container;
-        if(!box) return;
-        if(box.classList.contains('anexus-web-fullscreen')) exitAnexusWebFullscreen(player);
-        else enterAnexusWebFullscreen(player);
-      } catch(__){}
-    }
-  }
-
-  /* The corner button is Plyr's own fullscreen button. We use it as the
-     minimize/restore control for our custom fullscreen shell. */
-  function fullscreenControlHandler(e){
-    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
-    if(!btn) return;
-    const box=btn.closest('.plyr');
-    const player=playerForBox(box);
-    if(!player) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    suppressFullscreenClickUntil=performance.now()+450;
-    toggleOurFullscreen(player);
-  }
-  document.addEventListener('pointerdown',fullscreenControlHandler,true);
-  document.addEventListener('pointerup',fullscreenControlHandler,true);
-
-  /* Some browsers dispatch click after pointerup. Swallow only that synthetic
-     follow-up so the corner button cannot toggle twice. */
-  document.addEventListener('click',function(e){
-    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
-    if(!btn) return;
-    if(performance.now()<suppressFullscreenClickUntil){
-      e.preventDefault(); e.stopPropagation();
-      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    }
-  },true);
-
-  function attachCenter(player){
-    const box=player?.elements?.container;
-    if(!box || box.dataset.anexusCenterRobust==='1') return;
-    box.dataset.anexusCenterRobust='1';
-    const feedback=document.createElement('div');
-    feedback.className='anexus-center-play-feedback';
-    feedback.setAttribute('aria-hidden','true');
-    box.appendChild(feedback);
-    let timer=null;
-    const show=()=>{
-      feedback.textContent=player.playing?'❚❚':'▶';
-      feedback.classList.add('show');
-      clearTimeout(timer);
-      timer=setTimeout(()=>feedback.classList.remove('show'),500);
-    };
-
-    /* Use pointerup rather than click. Plyr itself also listens for clicks on
-       the media, so using click here caused the exact half-second pause/resume
-       double-toggle reported on iPhone/iPad. */
-    box.addEventListener('pointerup',function(e){
-      if(e.pointerType==='mouse' && e.button!==0) return;
-      if(e.target?.closest?.('.plyr__controls,.plyr__control,.plyr__menu,.plyr__tooltip,.anexus-player-menu,.anexus-center-play-feedback')) return;
-      const r=box.getBoundingClientRect();
-      const x=e.clientX-r.left, y=e.clientY-r.top;
-      if(x<r.width*.25 || x>r.width*.75 || y<r.height*.25 || y>r.height*.75) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-      suppressNextClickUntil=performance.now()+500;
-      try { player.togglePlay(); show(); } catch(_) {}
-    },true);
-
-    box.addEventListener('click',function(e){
-      if(performance.now()<suppressNextClickUntil){
-        e.preventDefault(); e.stopPropagation();
-        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-      }
-    },true);
-  }
-
-  function scan(){
-    const seen=new Set();
-    const list=[];
-    if(window.activePlyrInstance) list.push(window.activePlyrInstance);
-    if(window.player) list.push(window.player);
-    document.querySelectorAll('.plyr').forEach(el=>{if(el.plyr) list.push(el.plyr);});
-    list.forEach(p=>{if(!p||seen.has(p))return;seen.add(p);try{attachCenter(p);}catch(_){} });
-  }
-  scan();
-  const timer=setInterval(scan,300);
-  setTimeout(()=>clearInterval(timer),60000);
-})();
-</script>
 </body>
 </html><style id="anexus-hero-true-fit">
 /* Homepage Spotlight: fit the real AniList banner to the viewport width. Never crop/zoom it. */
@@ -7653,99 +7483,135 @@ html,body,#home-view,#search-view,#watch-view,.view{width:100%!important;max-wid
 #watch-view.anexus-direct-player .plyr{width:100vw!important;max-width:none!important;margin:0!important;}
 </style>
 
-<style id="anexus-final-player-interaction-fix">
-/* Final player interaction layer: center pause/play feedback and a reliably tappable Minimize. */
+<style id="anexus-player-final-interaction-authoritative">
 .anexus-center-play-feedback{
-  position:absolute;left:50%;top:50%;width:78px;height:78px;margin:-39px 0 0 -39px;
-  display:flex;align-items:center;justify-content:center;border-radius:50%;
-  background:rgba(8,10,18,.72);border:1px solid rgba(255,255,255,.22);
-  box-shadow:0 10px 35px rgba(0,0,0,.5);color:#fff;font-size:30px;font-weight:800;
-  opacity:0;transform:scale(.78);pointer-events:none;z-index:2147483645;
-  transition:opacity .16s ease,transform .16s ease;
+  position:absolute!important;left:50%!important;top:50%!important;width:78px!important;height:78px!important;
+  margin:-39px 0 0 -39px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:50%!important;background:rgba(8,10,18,.72)!important;border:1px solid rgba(255,255,255,.22)!important;
+  box-shadow:0 10px 35px rgba(0,0,0,.5)!important;color:#fff!important;font-size:30px!important;font-weight:800!important;
+  opacity:0!important;transform:scale(.78)!important;pointer-events:none!important;z-index:2147483645!important;
+  transition:opacity .16s ease,transform .16s ease!important;
 }
-.anexus-center-play-feedback.show{opacity:1;transform:scale(1);}
-.anexus-player-menu .anexus-minimize-btn{position:relative!important;z-index:2147483647!important;pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important;}
+.anexus-center-play-feedback.show{opacity:1!important;transform:scale(1)!important;}
+.anexus-web-fullscreen .plyr__control[data-plyr="fullscreen"],
+.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]{
+  pointer-events:auto!important;z-index:2147483649!important;touch-action:manipulation!important;cursor:pointer!important;
+}
 </style>
-<script id="anexus-final-player-interaction-fix">
+<script id="anexus-player-final-interaction-authoritative">
 (function(){
-  function getPlayer(){ return window.activePlyrInstance || window.player || null; }
+  'use strict';
+  let suppressFullscreenClickUntil=0;
 
-  function goBackToAnime(){
-    const p=getPlayer();
-    try{ if(p?.pause) p.pause(); }catch(_){ }
-    try{ if(p) exitAnexusWebFullscreen(p); }catch(_){ }
-    try{ document.exitFullscreen?.().catch?.(()=>{}); }catch(_){ }
-    try{ if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch(_){ }
-    document.body.classList.remove('anexus-player-fullscreen');
-    document.documentElement.classList.remove('anexus-player-fullscreen');
-    const view=document.getElementById('watch-view');
-    if(view){
-      view.classList.remove('player-mode','player-options-mode','anexus-direct-player');
-      view.style.removeProperty('display');
-      view.style.removeProperty('visibility');
-      view.style.removeProperty('opacity');
-    }
-    try{ destroyActivePlayer(); }catch(_){ }
-    const wrap=document.getElementById('player-wrap');
-    if(wrap) wrap.innerHTML='';
-    try{ renderAnimeLanding(); }catch(_){ }
-    const landing=document.getElementById('anime-landing');
-    if(landing){ landing.style.removeProperty('display'); landing.scrollIntoView({block:'start',behavior:'instant'}); }
-    window.scrollTo(0,0);
+  function getPlayerFromButton(btn){
+    const el=btn?.closest?.('.plyr');
+    return el?.plyr || window.activePlyrInstance || window.player || null;
   }
 
-  // Replace the existing minimize action with a direct, capture-phase action.
-  function handleMinimize(e){
-    const btn=e.target?.closest?.('.anexus-player-menu [data-minimize], .player-back');
+  function handlePlyrFullscreen(e){
+    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
     if(!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    goBackToAnime();
+    const player=getPlayerFromButton(btn);
+    if(!player) return;
+
+    // One gesture = one toggle. Do it during pointerdown and suppress Plyr's
+    // own later click so it cannot toggle back immediately.
+    if(e.type==='pointerdown'){
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+      suppressFullscreenClickUntil=performance.now()+700;
+      try{
+        if(player.elements?.container?.classList.contains('anexus-web-fullscreen')){
+          exitAnexusWebFullscreen(player);
+        }else{
+          enterAnexusWebFullscreen(player);
+        }
+      }catch(_){ }
+      return;
+    }
+
+    if(e.type==='click' && performance.now()<suppressFullscreenClickUntil){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+    }
   }
-  document.addEventListener('pointerdown',handleMinimize,true);
-  document.addEventListener('touchstart',handleMinimize,true);
-  document.addEventListener('click',handleMinimize,true);
+
+  // Capture at document level so this wins over Plyr's target listener on iOS,
+  // iPadOS, Android and desktop.
+  document.addEventListener('pointerdown',handlePlyrFullscreen,true);
+  document.addEventListener('click',handlePlyrFullscreen,true);
 
   function attachCenter(player){
     const box=player?.elements?.container;
-    if(!box || box.dataset.anexusCenterFinal==='1') return;
-    box.dataset.anexusCenterFinal='1';
+    if(!box || box.dataset.anexusCenterAuthoritative==='1') return;
+    box.dataset.anexusCenterAuthoritative='1';
+
     const feedback=document.createElement('div');
     feedback.className='anexus-center-play-feedback';
     feedback.setAttribute('aria-hidden','true');
     box.appendChild(feedback);
-    let timer=null;
+    let timer=0;
 
-    function show(){
-      feedback.textContent=player.playing?'❚❚':'▶';
+    function showFeedback(){
+      feedback.textContent=player.playing ? '❚❚' : '▶';
       feedback.classList.add('show');
       clearTimeout(timer);
-      timer=setTimeout(()=>feedback.classList.remove('show'),650);
+      timer=setTimeout(()=>feedback.classList.remove('show'),550);
     }
 
-    box.addEventListener('click',function(e){
-      if(e.target.closest('.plyr__controls,.plyr__control,.plyr__menu,.plyr__tooltip,.anexus-player-menu,.anexus-center-play-feedback')) return;
+    function inCenter(e){
       const r=box.getBoundingClientRect();
+      if(!r.width || !r.height) return false;
       const x=e.clientX-r.left, y=e.clientY-r.top;
-      // Only the central area controls play/pause; edge taps remain available for controls.
-      if(x<r.width*.25 || x>r.width*.75 || y<r.height*.25 || y>r.height*.75) return;
+      return x>=r.width*.25 && x<=r.width*.75 && y>=r.height*.25 && y<=r.height*.75;
+    }
+
+    // The media itself gets exactly one toggle. Controls/settings/menu never do.
+    box.addEventListener('pointerup',function(e){
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      if(e.target?.closest?.('.plyr__controls,.plyr__control,.plyr__menu,.plyr__tooltip,.anexus-player-menu,.anexus-center-play-feedback')) return;
+      if(!inCenter(e)) return;
       e.preventDefault();
       e.stopPropagation();
-      try{ player.togglePlay(); }catch(_){ return; }
-      show();
+      e.stopImmediatePropagation?.();
+      try{
+        player.togglePlay();
+        // Wait for Plyr/media state to update before choosing the icon.
+        setTimeout(showFeedback,20);
+      }catch(_){ }
+    },true);
+
+    // iOS/Android can synthesize a click after pointerup. Swallow that click
+    // only when it lands in the media center, preventing a second toggle.
+    box.addEventListener('click',function(e){
+      if(e.target?.closest?.('.plyr__controls,.plyr__control,.plyr__menu,.plyr__tooltip,.anexus-player-menu,.anexus-center-play-feedback')) return;
+      if(!inCenter(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
     },true);
   }
 
-  const scan=()=>{
-    const ps=[];
-    if(window.activePlyrInstance) ps.push(window.activePlyrInstance);
-    document.querySelectorAll('.plyr').forEach(el=>{ if(el.plyr) ps.push(el.plyr); });
-    ps.forEach(p=>{ try{ attachCenter(p); }catch(_){ } });
-  };
+  function scan(){
+    const seen=new Set();
+    const players=[];
+    if(window.activePlyrInstance) players.push(window.activePlyrInstance);
+    if(window.player) players.push(window.player);
+    document.querySelectorAll('.plyr').forEach(el=>{ if(el.plyr) players.push(el.plyr); });
+    players.forEach(p=>{
+      if(!p || seen.has(p)) return;
+      seen.add(p);
+      try{ attachCenter(p); }catch(_){ }
+    });
+  }
   scan();
-  const timer=setInterval(scan,350);
-  setTimeout(()=>clearInterval(timer),45000);
+  const observer=new MutationObserver(scan);
+  observer.observe(document.documentElement,{subtree:true,childList:true});
+  setTimeout(()=>observer.disconnect(),120000);
+  setInterval(scan,1000);
 })();
 </script>
 
