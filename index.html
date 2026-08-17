@@ -3849,21 +3849,33 @@ function setDefaultLang(lang){
   document.getElementById('default-sub-choice')?.classList.toggle('active',lang==='sub');
   document.getElementById('default-dub-choice')?.classList.toggle('active',lang==='dub');
 }
-function openDubFallback(){
+function openDubFallback(fromLang='dub', toLang='sub'){
   const m=document.getElementById('dub-fallback-modal'); if(!m)return;
+  const title=document.getElementById('dub-fallback-title');
+  const text=document.getElementById('dub-fallback-text');
+  const action=m.querySelector('.playback-confirm');
+  const fromLabel=fromLang==='dub'?'DUB':'SUB';
+  const toLabel=toLang==='dub'?'DUB':'SUB';
+  if(title) title.textContent=`${fromLabel} isn't available`;
+  if(text) text.textContent=`There isn't a ${fromLabel} option for this episode, so you can continue with ${toLabel}.`;
+  if(action){ action.textContent=`Continue with ${toLabel}`; action.onclick=()=>continueWithLang(toLang); }
   m.classList.add('active'); m.setAttribute('aria-hidden','false');
 }
 function closeDubFallback(){
   const m=document.getElementById('dub-fallback-modal'); if(!m)return;
   m.classList.remove('active'); m.setAttribute('aria-hidden','true'); dubFallbackPending=false;
+  window.anexusFallbackFromLang=null; window.anexusFallbackToLang=null;
 }
-function continueWithSub(){
+function continueWithLang(lang){
+  const toLang=lang==='dub'?'dub':'sub';
   closeDubFallback();
-  state.lang='sub';
-  document.getElementById('lang-sub')?.classList.add('active');
-  document.getElementById('lang-dub')?.classList.remove('active');
+  state.lang=toLang;
+  document.getElementById('lang-sub')?.classList.toggle('active',toLang==='sub');
+  document.getElementById('lang-dub')?.classList.toggle('active',toLang==='dub');
+  localStorage.setItem('anexus_default_lang',toLang);
   if(state.currentEp) playEp(state.currentEp,{autoFullscreen:pendingAutoFullscreen,resumeTime:pendingResumeTime});
 }
+function continueWithSub(){ continueWithLang('sub'); }
 function enterAnexusWebFullscreen(player){
   const box=player?.elements?.container;
   if(!box) return false;
@@ -5196,14 +5208,22 @@ async function playEp(ep, options={}) {
           
           await ensureVideoScripts();
           
-          const streamData = state.lang === 'dub' ? data.sdub : data.ssub;
-          if (!streamData || !streamData.streams || streamData.streams.length === 0) {
-              if(state.lang==='dub') {
-                dubFallbackPending=true;
-                openDubFallback();
+          let requestedLang = state.lang === 'dub' ? 'dub' : 'sub';
+          let streamData = requestedLang === 'dub' ? data?.sdub : data?.ssub;
+
+          // Respect the user's selected language first. Only fall back when the
+          // requested language genuinely has no streams for this episode.
+          if (!streamData || !Array.isArray(streamData.streams) || streamData.streams.length === 0) {
+              const fallbackLang = requestedLang === 'dub' ? 'sub' : 'dub';
+              const fallbackData = fallbackLang === 'dub' ? data?.sdub : data?.ssub;
+              if (fallbackData && Array.isArray(fallbackData.streams) && fallbackData.streams.length) {
+                dubFallbackPending = requestedLang === 'dub';
+                window.anexusFallbackFromLang = requestedLang;
+                window.anexusFallbackToLang = fallbackLang;
+                openDubFallback(requestedLang, fallbackLang);
                 return;
               }
-              throw new Error(`${state.lang.toUpperCase()} not found for this episode`);
+              throw new Error(`${requestedLang.toUpperCase()} not found for this episode`);
           }
           
           const stream = streamData.streams.find(s => s.server === 'VidPlay-1' && s.type === 'hls')
@@ -6955,6 +6975,9 @@ KageWatchAnalytics.init();
 
       e.preventDefault();
       e.stopPropagation();
+      // A center tap both reveals the player controls and toggles playback.
+      // This makes Settings/Minimize reachable again on iPhone/iPad fullscreen.
+      try { if(typeof player.toggleControls === 'function') player.toggleControls(true); } catch(_) {}
       player.togglePlay();
 
       feedback.textContent = player.playing ? "▶" : "❚❚";
@@ -7021,6 +7044,9 @@ KageWatchAnalytics.init();
   });
 })();
 </script>
+
+
+
 </body>
 </html><style id="anexus-hero-true-fit">
 /* Homepage Spotlight: fit the real AniList banner to the viewport width. Never crop/zoom it. */
@@ -7281,3 +7307,58 @@ KageWatchAnalytics.init();
   .upcoming-row .a-card-body{min-height:98px !important;}
 }
 </style>
+
+<style id="anexus-final-hero-and-player-fix">
+/* FINAL HOMEPAGE SPOTLIGHT: show the real AniList banner at its natural ratio.
+   Never crop it to fill the tall phone viewport, never blur, never zoom, never pan. */
+#hero{
+  position:relative!important;
+  overflow:hidden!important;
+  background:#000!important;
+  height:min(82svh,820px)!important;
+  min-height:0!important;
+}
+#hero-slider-container,.hero-slide{position:absolute!important;inset:0!important;}
+#hero .hero-bg{
+  position:absolute!important;
+  left:0!important;right:0!important;top:0!important;bottom:auto!important;
+  width:100%!important;height:0!important;
+  padding-top:33.333333%!important;
+  inset-inline:0!important;
+  background-size:100% auto!important;
+  background-position:top center!important;
+  background-repeat:no-repeat!important;
+  background-color:#000!important;
+  filter:none!important;
+  transform:none!important;
+  will-change:auto!important;
+}
+#hero .hero-cover{display:none!important;}
+#hero .hero-content{
+  position:relative!important;z-index:3!important;
+  width:100%!important;max-width:none!important;margin:0!important;
+  box-sizing:border-box!important;
+  justify-content:flex-start!important;align-items:flex-end!important;
+  text-align:left!important;
+  padding:0 max(18px,env(safe-area-inset-left)) calc(34px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important;
+}
+#hero .hero-left{width:100%!important;max-width:720px!important;text-align:left!important;margin:0!important;}
+#hero .hero-grad{
+  position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;
+  background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,.18) 48%,rgba(0,0,0,.70) 73%,#000 94%,#000 100%)!important;
+}
+@media(max-width:600px){
+  #hero{height:78svh!important;min-height:520px!important;}
+  #hero .hero-bg{padding-top:33.333333%!important;background-size:100% auto!important;background-position:top center!important;}
+  #hero .hero-content{padding-left:max(16px,env(safe-area-inset-left))!important;padding-right:max(16px,env(safe-area-inset-right))!important;padding-bottom:calc(34px + env(safe-area-inset-bottom))!important;}
+}
+
+/* In AnimeNexus fullscreen, controls remain part of our player. */
+body.anexus-player-fullscreen .plyr__controls{z-index:2147483601!important;}
+body.anexus-player-fullscreen .anexus-player-menu{z-index:2147483602!important;}
+body.anexus-player-fullscreen .plyr__controls--hidden{pointer-events:none;}
+body.anexus-player-fullscreen .plyr:hover .plyr__controls,
+body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:auto;}
+</style>
+</body>
+</html>
