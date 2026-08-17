@@ -1360,66 +1360,6 @@ video {
   #anime-landing .landing-watch-btn{font-size:.82rem;padding-inline:9px}
   #anime-landing .landing-watch-icon{font-size:1em}
 }
-<style id="anexus-detail-hero-v3">
-/* Anime detail hero: artwork is the hero surface, not a separate banner. */
-#anime-landing .landing-hero{
-  position:relative;
-  isolation:isolate;
-  overflow:hidden;
-  background:#000;
-  min-height:0;
-  height:clamp(620px,82svh,900px);
-}
-#anime-landing .landing-hero::before{
-  content:"";
-  position:absolute;
-  inset:-1.5%;
-  z-index:0;
-  background-image:var(--landing-art, none);
-  background-repeat:no-repeat;
-  background-size:cover;
-  background-position:center 18%;
-  filter:blur(7px);
-  transform:scale(1.045);
-  transform-origin:center center;
-}
-#anime-landing .landing-hero img{
-  position:absolute;
-  width:1px;
-  height:1px;
-  opacity:0;
-  pointer-events:none;
-}
-#anime-landing .landing-hero-shade{
-  z-index:1;
-  background:
-    linear-gradient(180deg,
-      rgba(0,0,0,.04) 0%,
-      rgba(0,0,0,.04) 32%,
-      rgba(0,0,0,.16) 51%,
-      rgba(0,0,0,.48) 68%,
-      rgba(0,0,0,.80) 82%,
-      rgba(0,0,0,.96) 93%,
-      #000 100%);
-}
-#anime-landing .landing-hero-gradient{
-  z-index:2;
-  height:52%;
-  background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.12) 18%,rgba(0,0,0,.52) 52%,rgba(0,0,0,.90) 78%,#000 100%);
-}
-#anime-landing .landing-hero-content{
-  z-index:3;
-  max-width:940px;
-  bottom:max(22px,env(safe-area-inset-bottom));
-}
-@media(max-width:700px){
-  #anime-landing .landing-hero{
-    height:clamp(600px,84svh,800px);
-  }
-  #anime-landing .landing-hero::before{
-    background-position:center 15%;
-  }
-}
 </style>
 <style id="anexus-series-art-fix">
 /* More From This Series: never let the artwork collapse/hide. */
@@ -4714,22 +4654,9 @@ function renderAnimeLanding(){
   // Keep the existing banner resolver (including the custom One Piece artwork) untouched.
   const banner=state.animeBanner||state.animeCover||'';
   title.textContent=state.animeTitle||'Anime';
-  // Keep the existing image metadata/source, including the custom One Piece resolver,
-  // but use that same artwork as the actual full hero surface.
   img.src=banner;
   img.alt=`${state.animeTitle||'Anime'} artwork`;
-  const hero=img.closest('.landing-hero');
-  const setHeroArt=(src)=>{
-    if(!hero||!src)return;
-    hero.style.setProperty('--landing-art', `url(\"${String(src).replace(/\"/g,'\\\"')}\")`);
-  };
-  setHeroArt(banner);
-  img.onerror=()=>{
-    if(state.animeCover && img.src!==state.animeCover){
-      img.src=state.animeCover;
-      setHeroArt(state.animeCover);
-    }
-  };
+  img.onerror=()=>{ if(img.src!==state.animeCover&&state.animeCover){img.src=state.animeCover;} };
 
   const desc=document.getElementById('landing-description');
   if(desc) desc.textContent=state.animeObj?.description ? state.animeObj.description.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim() : 'No description available.';
@@ -5587,53 +5514,31 @@ function scrollDates(dir) {
     
   await initialWatchPromise;
 
-  // Keep the original four core catalogs together. Additional genre catalogs are
-  // loaded sequentially so AniList is not hit by ten simultaneous GraphQL requests.
-  const [trending, airing, top, finished] = await Promise.all([
+  const [trending, airing, top, finished, action, fantasy, adventure, comedy, drama, romance] = await Promise.all([
     alQ(`query{Page(perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:POPULARITY_DESC,type:ANIME,status:RELEASING,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:SCORE_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(sort:END_DATE_DESC,type:ANIME,status:FINISHED,format:TV,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
+    alQ(`query{Page(perPage:20){media(sort:END_DATE_DESC,type:ANIME,status:FINISHED,format:TV,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Action",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Fantasy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Adventure",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Comedy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Drama",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Page(perPage:20){media(genre:"Romance",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
   ]);
-
+  
   const tList=trending?.Page?.media||[];
-  const airingList=airing?.Page?.media||[];
-  const topList=top?.Page?.media||[];
-  const finishedList=finished?.Page?.media||[];
   buildHero(tList.slice(0,5));
   fillStrip('strip-trending', tList);
-  fillStrip('strip-airing', airingList);
-  fillStrip('strip-finished', finishedList);
-  fillStrip('strip-top', topList);
-
-  // Extra rows. Each request is isolated, and a local fallback is used if AniList
-  // rate-limits the genre request so the row never gets stuck on “Nothing found”.
-  const catalogPool=[...tList,...airingList,...topList,...finishedList];
-  const uniqueById=(list)=>{
-    const seen=new Set();
-    return (list||[]).filter(a=>a?.id&&!seen.has(a.id)&&(seen.add(a.id),true));
-  };
-  const genreRows=[
-    ['Action','strip-action'],
-    ['Fantasy','strip-fantasy'],
-    ['Adventure','strip-adventure'],
-    ['Comedy','strip-comedy'],
-    ['Drama','strip-drama'],
-    ['Romance','strip-romance']
-  ];
-  const genreQuery=(genre)=>`query{Page(perPage:20){media(genre:${JSON.stringify(genre)},sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`;
-  for(const [genre,id] of genreRows){
-    let list=[];
-    try{
-      const d=await alQ(genreQuery(genre));
-      list=d?.Page?.media||[];
-    }catch(e){ console.warn(`Catalog ${genre} failed`,e); }
-    if(!list.length){
-      list=uniqueById(catalogPool.filter(a=>(a.genres||[]).includes(genre))).slice(0,20);
-    }
-    fillStrip(id, list);
-    await new Promise(r=>setTimeout(r,120));
-  }
+  fillStrip('strip-airing', airing?.Page?.media||[]);
+  fillStrip('strip-finished', finished?.Page?.media||[]);
+  fillStrip('strip-top', top?.Page?.media||[]);
+  fillStrip('strip-action', action?.Page?.media||[]);
+  fillStrip('strip-fantasy', fantasy?.Page?.media||[]);
+  fillStrip('strip-adventure', adventure?.Page?.media||[]);
+  fillStrip('strip-comedy', comedy?.Page?.media||[]);
+  fillStrip('strip-drama', drama?.Page?.media||[]);
+  fillStrip('strip-romance', romance?.Page?.media||[]);
 
   if (window.__animeNexusStartupReady) window.__animeNexusStartupReady();
   
@@ -6753,3 +6658,289 @@ KageWatchAnalytics.init();
 
 </body>
 </html></body>
+<style id="anexus-opening-hero-redesign">
+/* ======================================================
+   AnimeNexus Opening Spotlight — immersive artwork hero
+   Visual-only override: keeps the existing hero data,
+   slider, navigation, buttons and catalog logic intact.
+   ====================================================== */
+#hero {
+  height: min(82svh, 820px);
+  min-height: 590px;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+}
+
+#hero::before,
+#hero::after {
+  display: none;
+}
+
+#hero-slider-container,
+.hero-slide {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-slide {
+  overflow: hidden;
+}
+
+.hero-bg {
+  inset: -28px;
+  background-size: cover;
+  background-position: center center;
+  filter: blur(7px) brightness(.72);
+  transform: scale(1.055);
+  will-change: transform;
+}
+
+/* Artwork fades into the existing black page instead of ending as a banner. */
+.hero-grad {
+  inset: 0;
+  background:
+    linear-gradient(to right,
+      rgba(0,0,0,.72) 0%,
+      rgba(0,0,0,.38) 34%,
+      rgba(0,0,0,.08) 68%,
+      rgba(0,0,0,.18) 100%),
+    linear-gradient(to bottom,
+      rgba(0,0,0,.08) 0%,
+      rgba(0,0,0,.05) 36%,
+      rgba(0,0,0,.28) 57%,
+      rgba(0,0,0,.76) 76%,
+      #000 100%);
+}
+
+/* A second soft black layer prevents any visible image/website boundary. */
+#hero-slider-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    transparent 50%,
+    rgba(0,0,0,.28) 66%,
+    rgba(0,0,0,.78) 84%,
+    #000 100%);
+}
+
+.hero-content {
+  z-index: 3;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 clamp(24px, 6vw, 88px) clamp(42px, 7vh, 78px);
+  max-width: 1280px;
+  margin: 0 auto;
+  transform: translateY(16px);
+}
+
+.hero-left {
+  max-width: min(680px, 62vw);
+  flex: 0 1 680px;
+}
+
+.hero-eyebrow {
+  margin-bottom: 12px;
+  font-size: .72rem;
+  letter-spacing: 2.2px;
+  text-shadow: 0 2px 14px #000;
+}
+
+.hero-title {
+  max-width: 760px;
+  margin-bottom: 13px;
+  font-size: clamp(2.8rem, 5.8vw, 5.4rem);
+  line-height: .9;
+  letter-spacing: 1.5px;
+  text-shadow: 0 4px 28px rgba(0,0,0,.95), 0 1px 3px #000;
+}
+
+.hero-genres {
+  margin-bottom: 13px;
+  gap: 7px;
+}
+
+.hero-genre {
+  padding: 4px 10px;
+  background: rgba(0,0,0,.34);
+  border-color: rgba(255,255,255,.18);
+  box-shadow: 0 3px 16px rgba(0,0,0,.22);
+}
+
+.hero-desc {
+  max-width: 620px;
+  margin-bottom: 20px;
+  color: rgba(255,255,255,.86);
+  font-size: .92rem;
+  line-height: 1.58;
+  text-shadow: 0 2px 14px #000;
+  -webkit-line-clamp: 2;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-watch {
+  min-height: 48px;
+  padding: 13px 28px;
+  border-radius: 5px;
+  box-shadow: 0 8px 26px rgba(230,57,80,.28);
+}
+
+/* The reference uses the artwork itself as the hero; don't show a second cover card. */
+.hero-right {
+  display: none;
+}
+
+.hero-dots {
+  bottom: 20px;
+  z-index: 6;
+}
+
+/* Desktop: keep the important subject away from the text column. */
+@media (min-width: 1100px) {
+  .hero-bg { background-position: center center; }
+}
+
+/* iPad / tablet */
+@media (min-width: 601px) and (max-width: 1024px) {
+  #hero {
+    height: min(78svh, 760px);
+    min-height: 560px;
+  }
+
+  .hero-content {
+    padding-left: clamp(28px, 5vw, 52px);
+    padding-right: clamp(28px, 5vw, 52px);
+    padding-bottom: 54px;
+  }
+
+  .hero-left {
+    max-width: min(700px, 82vw);
+  }
+}
+
+/* Phones: compact but still artwork-first, with safe-area support. */
+@media (max-width: 600px) {
+  #hero {
+    height: max(570px, min(78svh, 720px));
+    min-height: 570px;
+  }
+
+  .hero-bg {
+    inset: -22px;
+    background-position: 58% center;
+    filter: blur(7px) brightness(.68);
+    transform: scale(1.06);
+  }
+
+  .hero-grad {
+    background:
+      linear-gradient(to bottom,
+        rgba(0,0,0,.04) 0%,
+        rgba(0,0,0,.10) 35%,
+        rgba(0,0,0,.38) 56%,
+        rgba(0,0,0,.84) 77%,
+        #000 100%),
+      linear-gradient(to right,
+        rgba(0,0,0,.32) 0%,
+        rgba(0,0,0,.06) 100%);
+  }
+
+  .hero-content {
+    align-items: flex-end;
+    padding: 0 18px calc(48px + env(safe-area-inset-bottom));
+    text-align: left;
+  }
+
+  .hero-left {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .hero-eyebrow {
+    margin-bottom: 9px;
+  }
+
+  .hero-title {
+    font-size: clamp(2.45rem, 12vw, 4rem);
+    line-height: .9;
+    margin-bottom: 11px;
+  }
+
+  .hero-genres {
+    justify-content: flex-start;
+    margin-bottom: 11px;
+  }
+
+  .hero-genre {
+    font-size: .68rem;
+    padding: 4px 8px;
+  }
+
+  .hero-desc {
+    max-width: 100%;
+    margin-bottom: 16px;
+    font-size: .82rem;
+    line-height: 1.48;
+    -webkit-line-clamp: 2;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .btn-watch {
+    min-height: 46px;
+    padding: 12px 22px;
+    font-size: .84rem;
+  }
+
+  .hero-dots {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    gap: 7px;
+  }
+
+  .hero-dot {
+    width: 20px;
+  }
+
+  .hero-dot.active {
+    width: 32px;
+  }
+}
+
+@media (max-width: 380px) {
+  #hero {
+    min-height: 540px;
+    height: 72svh;
+  }
+
+  .hero-content {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: calc(43px + env(safe-area-inset-bottom));
+  }
+
+  .hero-title {
+    font-size: 2.35rem;
+  }
+
+  .hero-genres {
+    gap: 5px;
+  }
+
+  .hero-genre:nth-child(n+4) {
+    display: none;
+  }
+}
+</style>
