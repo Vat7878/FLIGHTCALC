@@ -1563,6 +1563,32 @@ body.anexus-player-fullscreen{overflow:hidden!important;touch-action:none!import
     .header-settings-icon,.header-home-icon,.icon-btn{flex-shrink:0}
   }
 </style>
+
+<style id="anexus-direct-player-fix">
+/* Direct playback: the player is the only visible surface while playing. */
+#watch-view.anexus-direct-player{
+  position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+  max-width:none!important;margin:0!important;padding:0!important;z-index:2147482999!important;
+  background:#000!important;overflow:hidden!important;
+}
+#watch-view.anexus-direct-player .watch-layout{
+  width:100%!important;max-width:none!important;height:100%!important;margin:0!important;padding:0!important;
+}
+#watch-view.anexus-direct-player .watch-left{width:100%!important;height:100%!important;padding:0!important}
+#watch-view.anexus-direct-player .player-back{display:flex!important;position:absolute!important;top:12px!important;left:12px!important;z-index:2147483100!important;margin:0!important;background:rgba(0,0,0,.65)!important}
+#watch-view.anexus-direct-player .player-container{width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important;margin:0!important}
+#watch-view.anexus-direct-player .player-actions,
+#watch-view.anexus-direct-player .server-box,
+#watch-view.anexus-direct-player #airing-schedule,
+#watch-view.anexus-direct-player .anime-details-box,
+#watch-view.anexus-direct-player .relations-section,
+#watch-view.anexus-direct-player #recommendations-wrap{display:none!important}
+#watch-view.anexus-direct-player .plyr{width:100%!important;height:100%!important}
+#watch-view.anexus-direct-player .plyr__video-wrapper{width:100%!important;height:100%!important}
+#watch-view.anexus-direct-player video{width:100%!important;height:100%!important;object-fit:contain!important}
+@supports not (height:100dvh){#watch-view.anexus-direct-player{height:100vh!important}}
+@media (orientation:portrait) and (max-width:700px){#watch-view.anexus-direct-player .player-container video{object-fit:contain!important}}
+</style>
 </head>
 <body>
 <div id="anexus-startup" aria-label="Loading AnimeNexus"><div class="anexus-startup-logo">AnimeNexus</div></div>
@@ -3839,6 +3865,7 @@ function exitAnexusWebFullscreen(player){
   const box=player?.elements?.container;
   if(box) box.classList.remove('anexus-web-fullscreen');
   document.body.classList.remove('anexus-player-fullscreen');
+  document.getElementById('watch-view')?.classList.remove('anexus-direct-player');
 }
 function toggleAnexusFullscreen(player){
   const box=player?.elements?.container;
@@ -3850,6 +3877,7 @@ function maybeEnterFullscreen(player){
   if(!player) return;
   if(!pendingAutoFullscreen && !document.body.classList.contains('anexus-player-fullscreen')) return;
   pendingAutoFullscreen=false;
+  document.getElementById('watch-view')?.classList.add('anexus-direct-player');
   enterAnexusWebFullscreen(player);
 }
 
@@ -4700,7 +4728,8 @@ function goHome() {
   destroyActivePlayer();
   document.getElementById('player-wrap').innerHTML = '';
   const watchView=document.getElementById('watch-view');
-  if(watchView)watchView.classList.remove('player-mode','player-options-mode');
+  if(watchView)watchView.classList.remove('player-mode','player-options-mode','anexus-direct-player');
+  document.body.classList.remove('anexus-player-fullscreen');
   clearInterval(window.airingTimer);
   
   // 🚀 URL ROUTING: Clean push state
@@ -4881,7 +4910,8 @@ function showEpisodePlayer(ep,opts={}){
   const view=document.getElementById('watch-view');
   if(!view)return;
   view.classList.remove('player-options-mode');
-  view.classList.add('player-mode');
+  view.classList.add('player-mode','anexus-direct-player');
+  document.body.classList.add('anexus-player-fullscreen');
   window.scrollTo(0,0);
   // Enter our own fullscreen shell immediately. This does not depend on Safari's
   // native video fullscreen or a later async promise, so iPhone/iPad can use the
@@ -4901,7 +4931,7 @@ function backToAnimeLanding(){
   if(!view)return;
   destroyActivePlayer();
   document.body.classList.remove('anexus-player-fullscreen');
-  view.classList.remove('player-mode');
+  view.classList.remove('player-mode','anexus-direct-player');
   document.getElementById('player-wrap').innerHTML='';
   renderAnimeLanding();
   window.scrollTo(0,0);
@@ -4946,7 +4976,7 @@ async function openWatchView(id) {
   // Direct starts (hero / Continue Watching) never show the anime landing page first.
   const initialDirectIntent = pendingWatchIntent && Number(pendingWatchIntent.aid)===Number(id) ? pendingWatchIntent : null;
   const watchViewNow = document.getElementById('watch-view');
-  if(initialDirectIntent) watchViewNow?.classList.add('player-mode');
+  if(initialDirectIntent) watchViewNow?.classList.add('player-mode','anexus-direct-player');
   document.getElementById('player-wrap').innerHTML=`<div class="player-placeholder"><div style="font-size:3rem; margin-bottom:10px;">⏳</div><p>Loading Player...</p></div>`;
   document.getElementById('ep-grid').innerHTML = '';
   document.querySelector('.ep-search').value = ''; 
@@ -5082,7 +5112,7 @@ async function openWatchView(id) {
     const watchView=document.getElementById('watch-view');
     watchView?.classList.remove('player-options-mode');
     watchView?.classList.add('player-mode');
-    setTimeout(()=>showEpisodePlayer(directIntent.ep,{autoFullscreen:true,resumeTime:Math.max(0,(Number(directIntent.position)||0)-5)}),0);
+    showEpisodePlayer(directIntent.ep,{autoFullscreen:true,resumeTime:Math.max(0,(Number(directIntent.position)||0)-5)});
   } else {
     showAnimeLanding();
   }
@@ -5226,6 +5256,8 @@ async function playEp(ep, options={}) {
               }
               // The player is now created; keep it in our own viewport fullscreen on every device.
               if(pendingAutoFullscreen || document.body.classList.contains('anexus-player-fullscreen')){
+                  const watchView=document.getElementById('watch-view');
+                  watchView?.classList.add('anexus-direct-player');
                   enterAnexusWebFullscreen(playerInstance);
               }
               setupPlayerLogic(playerInstance, skipBtn, skipTimes, ep);
