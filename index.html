@@ -4553,8 +4553,9 @@ function buildHero(list){
     const slide=document.createElement('div');
     slide.className='hero-slide'+(i===0?' active':'');
     
+    // Use the exact banner metadata carried by the normal catalog object.
     const bannerUrl = a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '';
-    const coverUrl = a.coverImage.extraLarge || a.coverImage.extraLarge;
+    const coverUrl = a?.coverImage?.extraLarge || a?.coverImage?.large || '';
     
     slide.innerHTML=`
       <div class="hero-bg" ${i === 0 ? `style="background-image:url('${bannerUrl}')"` : `data-bg="${bannerUrl}"`}></div>
@@ -5896,10 +5897,14 @@ function scrollDates(dir) {
   ]);
   
   const tList=trending?.Page?.media||[];
-  // Keep the homepage Spotlight driven by the normal trending rotation.
-  // One Piece is prioritized only in the Upcoming/Schedule catalog row below.
-  const heroList = tList.slice(0,5);
-  buildHero(heroList);
+
+  // IMPORTANT: Spotlight is built from the SAME live anime objects used by
+  // the normal Trending Now catalog. There is no separate/hardcoded hero
+  // catalogue or manually selected hero artwork.
+  const normalCatalogHero = tList
+    .filter(a => a && (a.bannerImage || a.coverImage?.extraLarge || a.coverImage?.large))
+    .slice(0,5);
+  buildHero(normalCatalogHero);
   fillStrip('strip-trending', tList);
   fillStrip('strip-airing', airing?.Page?.media||[]);
   fillStrip('strip-finished', finished?.Page?.media||[]);
@@ -7343,6 +7348,32 @@ body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:
 #hero .hero-right{display:none !important;}
 </style>
 </body>
+
+<style id="anexus-normal-catalog-banner-ULTIMATE">
+/* FINAL HERO SOURCE/PRESENTATION: normal catalog item banner only.
+   No old spotlight artwork, no crop, no zoom, no pan, no blur. */
+#hero .hero-bg {
+  position:absolute !important;
+  left:0 !important; right:0 !important; top:0 !important; bottom:auto !important;
+  width:100% !important; height:auto !important; min-height:0 !important;
+  padding-top:0 !important;
+  background-repeat:no-repeat !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-color:#000 !important;
+  filter:none !important;
+  transform:none !important;
+  inset-inline:0 !important;
+}
+#hero .hero-slide { background:#000 !important; overflow:hidden !important; }
+#hero .hero-cover, #hero .hero-right { display:none !important; }
+#hero .hero-grad {
+  position:absolute !important; inset:0 !important; z-index:2 !important; pointer-events:none !important;
+  background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 45%,rgba(0,0,0,.16) 60%,rgba(0,0,0,.72) 82%,#000 100%) !important;
+}
+#hero .hero-content { z-index:4 !important; text-align:left !important; }
+#hero .hero-left { text-align:left !important; margin-left:0 !important; margin-right:auto !important; }
+</style>
 </html>
 
 <style id="anexus-player-menu-final-fix">
