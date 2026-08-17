@@ -7081,6 +7081,120 @@ KageWatchAnalytics.init();
   document.addEventListener('touchend',handle,true);
 })();
 </script>
+
+<style id="anexus-final-center-and-fullscreen-button-fix">
+/* Final interaction fix: the video center toggles exactly once, and Plyr's own
+   fullscreen/minimize control toggles the AnimeNexus fullscreen shell. */
+.anexus-web-fullscreen .plyr__control[data-plyr="fullscreen"],
+.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]{
+  pointer-events:auto!important;
+  z-index:2147483649!important;
+  touch-action:manipulation!important;
+}
+.anexus-center-play-feedback{pointer-events:none!important;}
+</style>
+<script id="anexus-final-center-and-fullscreen-button-fix-script">
+(function(){
+  let suppressNextClickUntil=0;
+  let suppressFullscreenClickUntil=0;
+
+  function playerForBox(box){
+    return box?.plyr || window.activePlyrInstance || window.player || null;
+  }
+
+  function toggleOurFullscreen(player){
+    if(!player) return;
+    try { toggleAnexusFullscreen(player); } catch(_) {
+      try {
+        const box=player.elements?.container;
+        if(!box) return;
+        if(box.classList.contains('anexus-web-fullscreen')) exitAnexusWebFullscreen(player);
+        else enterAnexusWebFullscreen(player);
+      } catch(__){}
+    }
+  }
+
+  /* The corner button is Plyr's own fullscreen button. We use it as the
+     minimize/restore control for our custom fullscreen shell. */
+  function fullscreenControlHandler(e){
+    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
+    if(!btn) return;
+    const box=btn.closest('.plyr');
+    const player=playerForBox(box);
+    if(!player) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    suppressFullscreenClickUntil=performance.now()+450;
+    toggleOurFullscreen(player);
+  }
+  document.addEventListener('pointerdown',fullscreenControlHandler,true);
+  document.addEventListener('pointerup',fullscreenControlHandler,true);
+
+  /* Some browsers dispatch click after pointerup. Swallow only that synthetic
+     follow-up so the corner button cannot toggle twice. */
+  document.addEventListener('click',function(e){
+    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
+    if(!btn) return;
+    if(performance.now()<suppressFullscreenClickUntil){
+      e.preventDefault(); e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    }
+  },true);
+
+  function attachCenter(player){
+    const box=player?.elements?.container;
+    if(!box || box.dataset.anexusCenterRobust==='1') return;
+    box.dataset.anexusCenterRobust='1';
+    const feedback=document.createElement('div');
+    feedback.className='anexus-center-play-feedback';
+    feedback.setAttribute('aria-hidden','true');
+    box.appendChild(feedback);
+    let timer=null;
+    const show=()=>{
+      feedback.textContent=player.playing?'❚❚':'▶';
+      feedback.classList.add('show');
+      clearTimeout(timer);
+      timer=setTimeout(()=>feedback.classList.remove('show'),500);
+    };
+
+    /* Use pointerup rather than click. Plyr itself also listens for clicks on
+       the media, so using click here caused the exact half-second pause/resume
+       double-toggle reported on iPhone/iPad. */
+    box.addEventListener('pointerup',function(e){
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      if(e.target?.closest?.('.plyr__controls,.plyr__control,.plyr__menu,.plyr__tooltip,.anexus-player-menu,.anexus-center-play-feedback')) return;
+      const r=box.getBoundingClientRect();
+      const x=e.clientX-r.left, y=e.clientY-r.top;
+      if(x<r.width*.25 || x>r.width*.75 || y<r.height*.25 || y>r.height*.75) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      suppressNextClickUntil=performance.now()+500;
+      try { player.togglePlay(); show(); } catch(_) {}
+    },true);
+
+    box.addEventListener('click',function(e){
+      if(performance.now()<suppressNextClickUntil){
+        e.preventDefault(); e.stopPropagation();
+        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      }
+    },true);
+  }
+
+  function scan(){
+    const seen=new Set();
+    const list=[];
+    if(window.activePlyrInstance) list.push(window.activePlyrInstance);
+    if(window.player) list.push(window.player);
+    document.querySelectorAll('.plyr').forEach(el=>{if(el.plyr) list.push(el.plyr);});
+    list.forEach(p=>{if(!p||seen.has(p))return;seen.add(p);try{attachCenter(p);}catch(_){} });
+  }
+  scan();
+  const timer=setInterval(scan,300);
+  setTimeout(()=>clearInterval(timer),60000);
+})();
+</script>
 </body>
 </html><style id="anexus-hero-true-fit">
 /* Homepage Spotlight: fit the real AniList banner to the viewport width. Never crop/zoom it. */
