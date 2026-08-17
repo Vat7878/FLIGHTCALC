@@ -4048,7 +4048,26 @@ async function alQ(query, vars = {}, abortSignal = null) {
 }
 
 function clearHistory() { Store.clearHist(); }
-function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function showToast(msg, duration=2500){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._hideTimer);
+  t._hideTimer=setTimeout(()=>t.classList.remove('show'),duration);
+}
+
+function handlePlaybackUnavailable(message){
+  const wrap=document.getElementById('player-wrap');
+  if(wrap){
+    wrap.innerHTML=`<div class="player-loading">❌ ${message}</div>`;
+  }
+  // Keep the actual error visible briefly, then return to this anime's hero/detail page.
+  setTimeout(()=>{
+    try{ backToAnimeLanding(); }catch(_){ showAnimeLanding(); }
+    showToast("Sorry for the inconvenience — this anime isn't available right now. Please try again later.",3000);
+  },1000);
+}
 
 function updateCanonical() {
   const canonical = document.getElementById('canonical-link') || document.querySelector('link[rel="canonical"]');
@@ -5466,7 +5485,12 @@ async function playEp(ep, options={}) {
           }
 
       }).catch(err => {
-          playerWrap.innerHTML = `<div class="player-loading">❌ ${err.message}</div>`;
+          const message=err?.message || 'Unable to load this episode.';
+          if(/^Neither SUB nor DUB is available for Episode \d+\.?$/i.test(message)){
+              handlePlaybackUnavailable(message);
+          }else{
+              playerWrap.innerHTML = `<div class="player-loading">❌ ${message}</div>`;
+          }
       });
 
   } 
