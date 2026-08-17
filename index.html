@@ -7538,3 +7538,100 @@ html,body,#home-view,#search-view,#watch-view,.view{width:100%!important;max-wid
 #watch-view.anexus-direct-player .player-container,
 #watch-view.anexus-direct-player .plyr{width:100vw!important;max-width:none!important;margin:0!important;}
 </style>
+
+<style id="anexus-final-player-interaction-fix">
+/* Final player interaction layer: center pause/play feedback and a reliably tappable Minimize. */
+.anexus-center-play-feedback{
+  position:absolute;left:50%;top:50%;width:78px;height:78px;margin:-39px 0 0 -39px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:rgba(8,10,18,.72);border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 10px 35px rgba(0,0,0,.5);color:#fff;font-size:30px;font-weight:800;
+  opacity:0;transform:scale(.78);pointer-events:none;z-index:2147483645;
+  transition:opacity .16s ease,transform .16s ease;
+}
+.anexus-center-play-feedback.show{opacity:1;transform:scale(1);}
+.anexus-player-menu .anexus-minimize-btn{position:relative!important;z-index:2147483647!important;pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important;}
+</style>
+<script id="anexus-final-player-interaction-fix">
+(function(){
+  function getPlayer(){ return window.activePlyrInstance || window.player || null; }
+
+  function goBackToAnime(){
+    const p=getPlayer();
+    try{ if(p?.pause) p.pause(); }catch(_){ }
+    try{ if(p) exitAnexusWebFullscreen(p); }catch(_){ }
+    try{ document.exitFullscreen?.().catch?.(()=>{}); }catch(_){ }
+    try{ if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch(_){ }
+    document.body.classList.remove('anexus-player-fullscreen');
+    document.documentElement.classList.remove('anexus-player-fullscreen');
+    const view=document.getElementById('watch-view');
+    if(view){
+      view.classList.remove('player-mode','player-options-mode','anexus-direct-player');
+      view.style.removeProperty('display');
+      view.style.removeProperty('visibility');
+      view.style.removeProperty('opacity');
+    }
+    try{ destroyActivePlayer(); }catch(_){ }
+    const wrap=document.getElementById('player-wrap');
+    if(wrap) wrap.innerHTML='';
+    try{ renderAnimeLanding(); }catch(_){ }
+    const landing=document.getElementById('anime-landing');
+    if(landing){ landing.style.removeProperty('display'); landing.scrollIntoView({block:'start',behavior:'instant'}); }
+    window.scrollTo(0,0);
+  }
+
+  // Replace the existing minimize action with a direct, capture-phase action.
+  function handleMinimize(e){
+    const btn=e.target?.closest?.('.anexus-player-menu [data-minimize], .player-back');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    goBackToAnime();
+  }
+  document.addEventListener('pointerdown',handleMinimize,true);
+  document.addEventListener('touchstart',handleMinimize,true);
+  document.addEventListener('click',handleMinimize,true);
+
+  function attachCenter(player){
+    const box=player?.elements?.container;
+    if(!box || box.dataset.anexusCenterFinal==='1') return;
+    box.dataset.anexusCenterFinal='1';
+    const feedback=document.createElement('div');
+    feedback.className='anexus-center-play-feedback';
+    feedback.setAttribute('aria-hidden','true');
+    box.appendChild(feedback);
+    let timer=null;
+
+    function show(){
+      feedback.textContent=player.playing?'❚❚':'▶';
+      feedback.classList.add('show');
+      clearTimeout(timer);
+      timer=setTimeout(()=>feedback.classList.remove('show'),650);
+    }
+
+    box.addEventListener('click',function(e){
+      if(e.target.closest('.plyr__controls,.plyr__control,.plyr__menu,.plyr__tooltip,.anexus-player-menu,.anexus-center-play-feedback')) return;
+      const r=box.getBoundingClientRect();
+      const x=e.clientX-r.left, y=e.clientY-r.top;
+      // Only the central area controls play/pause; edge taps remain available for controls.
+      if(x<r.width*.25 || x>r.width*.75 || y<r.height*.25 || y>r.height*.75) return;
+      e.preventDefault();
+      e.stopPropagation();
+      try{ player.togglePlay(); }catch(_){ return; }
+      show();
+    },true);
+  }
+
+  const scan=()=>{
+    const ps=[];
+    if(window.activePlyrInstance) ps.push(window.activePlyrInstance);
+    document.querySelectorAll('.plyr').forEach(el=>{ if(el.plyr) ps.push(el.plyr); });
+    ps.forEach(p=>{ try{ attachCenter(p); }catch(_){ } });
+  };
+  scan();
+  const timer=setInterval(scan,350);
+  setTimeout(()=>clearInterval(timer),45000);
+})();
+</script>
+
