@@ -1318,11 +1318,40 @@ video {
 #anime-landing .landing-ep:hover{color:#fff;border-color:#ff5b0a;background:#17100c}
 #anime-landing .landing-ep.watched{border-bottom:3px solid #ff5b0a}
 #anime-landing .landing-ep.latest{color:#fff}
+
+/* Unified in-player controls: SUB/DUB, stream selection and episode navigation. */
+.anexus-player-menu{position:absolute;right:12px;bottom:54px;z-index:80;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
+.anexus-player-menu .anexus-menu-panel{display:none;width:min(290px,calc(100vw - 32px));max-height:min(55vh,430px);overflow:auto;background:rgba(10,10,10,.96);border:1px solid rgba(255,255,255,.16);border-radius:12px;box-shadow:0 18px 55px rgba(0,0,0,.55);padding:12px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:auto}
+.anexus-player-menu.open .anexus-menu-panel{display:block}
+.anexus-player-menu .anexus-menu-title{font-size:.72rem;font-weight:800;letter-spacing:.12em;color:#8e8e8e;text-transform:uppercase;margin:2px 0 8px}
+.anexus-player-menu .anexus-menu-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.anexus-player-menu button{font:inherit;color:#fff;background:#171717;border:1px solid #2a2a2a;border-radius:7px;min-height:38px;padding:8px 11px;cursor:pointer;font-weight:700}
+.anexus-player-menu button:hover{border-color:var(--accent);color:#fff}
+.anexus-player-menu button.active{background:var(--accent);border-color:var(--accent);color:#090909}
+.anexus-player-menu .anexus-episodes-btn{width:100%;background:#111;border-color:#333;text-align:left}
+.anexus-player-menu .anexus-menu-settings{width:38px;height:38px;padding:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.72);border-color:rgba(255,255,255,.2);font-size:1rem;pointer-events:auto;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.anexus-player-menu .anexus-menu-close{width:38px;height:38px;padding:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.72);border-color:rgba(255,255,255,.2);font-size:1.15rem;pointer-events:auto;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.anexus-player-menu.open{pointer-events:auto}
+body.anexus-player-fullscreen{overflow:hidden!important;touch-action:none!important}
+.anexus-web-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0!important;z-index:2147483000!important;background:#000!important}
+.anexus-web-fullscreen .plyr{width:100%!important;height:100%!important}
+.anexus-web-fullscreen .plyr__video-wrapper{width:100%!important;height:100%!important}
+.anexus-web-fullscreen video{width:100%!important;height:100%!important;object-fit:contain!important}
+@supports not (height:100dvh){.anexus-web-fullscreen{height:100vh!important}}
+@media(max-width:700px){
+  .anexus-player-menu{right:8px;bottom:58px}
+  .anexus-player-menu .anexus-menu-panel{width:min(300px,calc(100vw - 24px));max-height:52vh}
+}
+
 #watch-view:not(.player-mode) .watch-layout{display:none!important}
-#watch-view.player-mode #anime-landing,#watch-view.player-mode .breadcrumb,#watch-view.player-mode .episodes-panel,#watch-view.player-mode .player-actions,#watch-view.player-mode #airing-schedule,#watch-view.player-mode .anime-details-box,#watch-view.player-mode .relations-section,#watch-view.player-mode #recommendations-wrap{display:none!important}
-#watch-view.player-mode .watch-layout{display:block!important;margin:0 auto;max-width:1200px}
-#watch-view.player-mode .watch-left{width:100%}
+#watch-view.player-mode #anime-landing,#watch-view.player-mode .breadcrumb,#watch-view.player-mode .episodes-panel,#watch-view.player-mode .player-actions,#watch-view.player-mode #airing-schedule,#watch-view.player-mode .anime-details-box,#watch-view.player-mode .relations-section,#watch-view.player-mode #recommendations-wrap,#watch-view.player-mode .server-box{display:none!important}
+#watch-view.player-mode .watch-layout,#watch-view.player-options-mode .watch-layout{display:block!important;margin:0 auto;max-width:1200px}
+#watch-view.player-mode .watch-left,#watch-view.player-options-mode .watch-left{width:100%}
 #watch-view.player-mode .player-container{width:100%;max-height:78vh}
+#watch-view.player-options-mode #anime-landing{display:none!important}
+#watch-view.player-options-mode .episodes-panel,#watch-view.player-options-mode .player-actions,#watch-view.player-options-mode #airing-schedule,#watch-view.player-options-mode .anime-details-box,#watch-view.player-options-mode .relations-section,#watch-view.player-options-mode #recommendations-wrap{display:none!important}
+#watch-view.player-options-mode .server-box{display:block!important}
+#watch-view.player-options-mode .player-back{display:none!important}
 .player-back{display:none;align-items:center;gap:8px;width:max-content;margin:0 0 14px;border:1px solid #222;background:#0b0b0b;color:#aaa;padding:8px 12px;border-radius:0;cursor:pointer;font-size:.78rem;font-weight:700}
 #watch-view.player-mode .player-back{display:flex}
 #watch-view.player-mode .player-back:hover{color:#fff;border-color:#6495ED}
@@ -3510,7 +3539,7 @@ video {
 
   <div class="watch-layout">
     <div class="watch-left">
-      <button class="player-back" onclick="backToAnimeLanding()">← Episodes</button>
+      <button class="player-back" onclick="backToAnimeLanding()">↓ Minimize</button>
       <div class="player-container" id="player-wrap">
         <div class="player-placeholder">
           <div style="font-size: 3rem; margin-bottom:10px;">▶</div>
@@ -3799,13 +3828,34 @@ function continueWithSub(){
   document.getElementById('lang-dub')?.classList.remove('active');
   if(state.currentEp) playEp(state.currentEp,{autoFullscreen:pendingAutoFullscreen,resumeTime:pendingResumeTime});
 }
+function enterAnexusWebFullscreen(player){
+  const box=player?.elements?.container;
+  if(!box) return false;
+  box.classList.add('anexus-web-fullscreen');
+  document.body.classList.add('anexus-player-fullscreen');
+  return true;
+}
+function exitAnexusWebFullscreen(player){
+  const box=player?.elements?.container;
+  if(box) box.classList.remove('anexus-web-fullscreen');
+  document.body.classList.remove('anexus-player-fullscreen');
+}
+function toggleAnexusFullscreen(player){
+  const box=player?.elements?.container;
+  if(!box) return;
+  if(box.classList.contains('anexus-web-fullscreen')) exitAnexusWebFullscreen(player);
+  else enterAnexusWebFullscreen(player);
+}
 function maybeEnterFullscreen(player){
   if(!pendingAutoFullscreen || !player) return;
   pendingAutoFullscreen=false;
   setTimeout(()=>{
     try{
-      if(player.media && typeof player.media.webkitEnterFullscreen==='function' && /iPhone|iPad|iPod/i.test(navigator.userAgent)){ player.media.webkitEnterFullscreen(); return; }
-      if(player.fullscreen?.enter) { const r=player.fullscreen.enter(); if(r?.catch) r.catch(()=>{}); }
+      // Keep the exact same AnimeNexus/Plyr player on every device.
+      // iPhone/iPad use our CSS viewport fullscreen instead of Safari's native video player.
+      const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      if(isIOS){ enterAnexusWebFullscreen(player); return; }
+      if(player.fullscreen?.enter){ const r=player.fullscreen.enter(); if(r?.catch) r.catch(()=>{}); }
     }catch(_){ }
   },80);
 }
@@ -4537,7 +4587,7 @@ function buildHero(list){
           <div class="hero-genres">${(a.genres||[]).slice(0,4).map(g=>`<span class="hero-genre">${g}</span>`).join('')}</div>
           <div class="hero-desc">${(a.description||'').replace(/<[^>]*>/g,'').slice(0,100)}…</div>
           <div class="hero-actions">
-            <a href="/watch/${a.id}/${toSlug(getTitle(a.title))}" class="btn-watch" onclick="event.preventDefault(); openWatchView(${a.id})">▶ Watch Now</a>
+            <a href="/watch/${a.id}/${toSlug(getTitle(a.title))}" class="btn-watch" onclick="event.preventDefault(); startAnimeDirect(${a.id}, 1)">▶ Watch Now</a>
           </div>
         </div>
         <div class="hero-right">
@@ -4657,7 +4707,7 @@ function goHome() {
   destroyActivePlayer();
   document.getElementById('player-wrap').innerHTML = '';
   const watchView=document.getElementById('watch-view');
-  if(watchView)watchView.classList.remove('player-mode');
+  if(watchView)watchView.classList.remove('player-mode','player-options-mode');
   clearInterval(window.airingTimer);
   
   // 🚀 URL ROUTING: Clean push state
@@ -4828,7 +4878,7 @@ function showAnimeLanding(){
   const view=document.getElementById('watch-view');
   if(!view)return;
   destroyActivePlayer();
-  view.classList.remove('player-mode');
+  view.classList.remove('player-mode','player-options-mode');
   document.getElementById('player-wrap').innerHTML='';
   renderAnimeLanding();
   window.scrollTo(0,0);
@@ -4837,12 +4887,14 @@ function showEpisodePlayer(ep,opts={}){
   if(!ep||ep<1||ep>state.totalEps)return;
   const view=document.getElementById('watch-view');
   if(!view)return;
+  view.classList.remove('player-options-mode');
   view.classList.add('player-mode');
   window.scrollTo(0,0);
-  pendingResumeTime=Number(opts.resumeTime)||null;
+  pendingResumeTime=opts.resumeTime!=null ? Number(opts.resumeTime)||0 : null;
   pendingAutoFullscreen=opts.autoFullscreen!==false;
   playEp(ep,{resumeTime:pendingResumeTime,autoFullscreen:pendingAutoFullscreen});
 }
+function minimizePlayerToOptions(){ backToAnimeLanding(); }
 function backToAnimeLanding(){
   const view=document.getElementById('watch-view');
   if(!view)return;
@@ -4869,6 +4921,18 @@ function renderEpisodeList(){
   }
   const wrap=document.querySelector('.ep-grid-wrap');
   if(wrap)wrap.classList.toggle('list-mode',episodeViewMode==='list');
+}
+
+function startAnimeDirect(id, ep=1){
+  pendingWatchIntent={
+    mode:'direct',
+    aid:id,
+    ep:Math.max(1,parseInt(ep)||1),
+    lang:getDefaultLang(),
+    provider:getDefaultProvider(),
+    position:0
+  };
+  return openWatchView(id);
 }
 
 async function openWatchView(id) {
@@ -5001,17 +5065,21 @@ async function openWatchView(id) {
   }
 
   renderEpisodeList();
-  showAnimeLanding();
 
-  if(pendingWatchIntent && Number(pendingWatchIntent.aid)===Number(id)) {
-    const intent=pendingWatchIntent;
+  const directIntent = pendingWatchIntent && Number(pendingWatchIntent.aid)===Number(id) ? pendingWatchIntent : null;
+  if(directIntent){
     pendingWatchIntent=null;
-    state.lang=intent.lang||getDefaultLang();
-    state.provider=intent.provider||getDefaultProvider();
+    state.lang=directIntent.lang||getDefaultLang();
+    state.provider=directIntent.provider||getDefaultProvider();
     document.getElementById('lang-sub')?.classList.toggle('active',state.lang==='sub');
     document.getElementById('lang-dub')?.classList.toggle('active',state.lang==='dub');
     document.querySelectorAll('#server-wrap .server-btn').forEach(b=>b.classList.toggle('active',b.textContent===PROVIDERS[state.provider]?.name));
-    setTimeout(()=>showEpisodePlayer(intent.ep,{autoFullscreen:true,resumeTime:Math.max(0,(Number(intent.position)||0)-5)}),0);
+    const watchView=document.getElementById('watch-view');
+    watchView?.classList.remove('player-options-mode');
+    watchView?.classList.add('player-mode');
+    setTimeout(()=>showEpisodePlayer(directIntent.ep,{autoFullscreen:true,resumeTime:Math.max(0,(Number(directIntent.position)||0)-5)}),0);
+  } else {
+    showAnimeLanding();
   }
 }
 
@@ -5105,9 +5173,16 @@ async function playEp(ep, options={}) {
           const subsToUse = subSource.length > 0 ? subSource : (streamData.subtitles || []);
           const tracksHtml = buildSubtitleTracks(subsToUse, referer, state.lang);
 
+          // Keep all HLS stream choices inside the website player.
+          window.anexusStreamChoices = (streamData.streams || []).filter(s => s && s.url && (s.type === 'hls' || !s.type)).map((s,i) => ({
+            index:i, name:s.server || `Stream ${i+1}`, url:s.url, referer:s.referer || '', type:s.type || 'hls'
+          }));
+          window.anexusCurrentStreamIndex = Math.max(0, window.anexusStreamChoices.findIndex(s => s.name === stream.server));
+          if(window.anexusCurrentStreamIndex < 0) window.anexusCurrentStreamIndex = 0;
+
           playerWrap.innerHTML = `
               <div class="player-loading" id="p-loader" style="display:none;"></div>
-              <video id="anime-player" controls crossorigin="anonymous" playsinline style="width:100%; height:100%;">
+              <video id="anime-player" crossorigin="anonymous" playsinline webkit-playsinline="true" style="width:100%; height:100%;">
                   ${tracksHtml}
               </video>
               <button id="skip-btn">Skip ⏭️</button>
@@ -5145,6 +5220,7 @@ async function playEp(ep, options={}) {
                   }
               }
               setupPlayerLogic(playerInstance, skipBtn, skipTimes, ep);
+              injectPlayerMenu(playerInstance);
           };
 
 // --- DEVICE DETECTION ---
@@ -5169,25 +5245,9 @@ async function playEp(ep, options={}) {
               window.activeHlsInstance = null;
           }
 
-          /* iPhone/iPad Safari has native HLS support. Do NOT force Hls.js there;
-             Safari can play the m3u8 directly and this avoids the common iOS
-             MEDIA_ERR_SRC_NOT_SUPPORTED / player-error path. */
-          if (isIOS && video.canPlayType('application/vnd.apple.mpegurl')) {
-              video.src = proxyUrl;
-              video.load();
-              plyrPlayer = new Plyr(video, {
-                  controls: [
-                      'play-large', 'rewind', 'play', 'fast-forward',
-                      'progress', 'current-time', 'duration', 'mute',
-                      'volume', 'captions', 'settings', 'pip', 'fullscreen'
-                  ],
-                  settings: ['captions', 'speed'],
-                  captions: { active: true, update: true, language: 'en' }
-              });
-              window.activePlyrInstance = plyrPlayer;
-              if (isAutoPlay) video.play().catch(() => {});
-              injectCustomButtons(plyrPlayer);
-          } else if (window.Hls && Hls.isSupported()) {
+          // ALL DEVICES use the same AnimeNexus/Plyr player.
+          // iPhone/iPad no longer enter Safari's native video player.
+          if (window.Hls && Hls.isSupported()) {
               const hls = new Hls({
                   maxBufferLength: 30,
                   maxMaxBufferLength: 90,
@@ -5286,6 +5346,88 @@ async function playEp(ep, options={}) {
   Store.addHist(state.malId,{malId:state.malId, aid:state.anilistId, title:state.animeTitle, cover:state.animeCover, banner: (String(state.anilistId) === '21' ? ONE_PIECE_CUSTOM_COVER : (state.animeBanner || state.animeCover)), ep, total:state.totalEps, eps, lang:state.lang, provider:state.provider, position:savedPosition, remainingTime:savedPosition>0?`${Math.floor(savedPosition/60)}:${String(Math.floor(savedPosition%60)).padStart(2,'0')}`:''});
   syncToAniList(state.anilistId, ep);
   syncToMAL(state.malId, ep);
+}
+
+
+function injectPlayerMenu(player){
+  const box=player?.elements?.container;
+  if(!box || box.querySelector('.anexus-player-menu')) return;
+  const menu=document.createElement('div');
+  menu.className='anexus-player-menu';
+  menu.innerHTML=`
+    <div class="anexus-menu-panel">
+      <div class="anexus-menu-title">Audio</div>
+      <div class="anexus-menu-row">
+        <button type="button" data-lang="sub">SUB</button>
+        <button type="button" data-lang="dub">DUB</button>
+      </div>
+      <div class="anexus-menu-title">Stream</div>
+      <div class="anexus-menu-row" data-streams></div>
+      <button type="button" class="anexus-episodes-btn" data-episodes>☰  Episodes &amp; Anime</button>
+    </div>
+    <button type="button" class="anexus-menu-settings" aria-label="Audio and stream options">⚙</button>
+    <button type="button" class="anexus-menu-close" aria-label="Back to episodes">⋮</button>`;
+  box.appendChild(menu);
+  const panel=menu.querySelector('.anexus-menu-panel');
+  const settings=menu.querySelector('.anexus-menu-settings');
+  const dot=menu.querySelector('.anexus-menu-close');
+  settings.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();menu.classList.toggle('open');syncPlayerMenuState(menu);});
+  dot.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();backToAnimeLanding();});
+  menu.querySelectorAll('[data-lang]').forEach(btn=>btn.addEventListener('click',()=>{
+    const l=btn.dataset.lang;
+    const pos=Number(player.currentTime)||0;
+    menu.classList.remove('open');
+    setLang(l,{resumeTime:pos,keepPlayer:true});
+  }));
+  menu.querySelector('[data-episodes]').addEventListener('click',()=>{
+    menu.classList.remove('open');
+    backToAnimeLanding();
+  });
+  renderPlayerStreamChoices(menu);
+  syncPlayerMenuState(menu);
+}
+function renderPlayerStreamChoices(menu){
+  const wrap=menu?.querySelector('[data-streams]');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  const choices=window.anexusStreamChoices||[];
+  if(!choices.length){ wrap.innerHTML='<span style="color:#777;font-size:.75rem">Default stream</span>'; return; }
+  choices.forEach((choice,i)=>{
+    const b=document.createElement('button');
+    b.type='button'; b.textContent=choice.name||`Stream ${i+1}`;
+    b.dataset.streamIndex=i;
+    b.onclick=()=>switchPlayerStream(i);
+    wrap.appendChild(b);
+  });
+}
+function syncPlayerMenuState(menu){
+  if(!menu) return;
+  menu.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===state.lang));
+  menu.querySelectorAll('[data-stream-index]').forEach(b=>b.classList.toggle('active',Number(b.dataset.streamIndex)===Number(window.anexusCurrentStreamIndex)));
+  renderPlayerStreamChoices(menu);
+}
+async function switchPlayerStream(index){
+  const choices=window.anexusStreamChoices||[];
+  const choice=choices[index];
+  const player=window.activePlyrInstance;
+  if(!choice || !player) return;
+  const pos=Number(player.currentTime)||0;
+  window.anexusCurrentStreamIndex=index;
+  const rawUrl=choice.url;
+  const referer=choice.referer||'';
+  const proxyUrl=`https://kagewatch-kagewatch-proxy.hf.space/proxy?url=${encodeURIComponent(rawUrl)}&referer=${encodeURIComponent(referer)}`;
+  try{
+    if(window.activeHlsInstance && typeof window.activeHlsInstance.loadSource==='function'){
+      window.activeHlsInstance.loadSource(proxyUrl);
+      player.once('loadedmetadata',()=>{try{player.currentTime=pos}catch(_){}});
+    }else if(player.media){
+      player.media.src=proxyUrl;
+      player.media.load();
+      player.once('loadedmetadata',()=>{try{player.currentTime=pos}catch(_){}});
+    }
+    savePlaybackProgress();
+    document.querySelectorAll('.anexus-player-menu').forEach(syncPlayerMenuState);
+  }catch(e){showToast('Unable to switch stream. Please try another stream.');}
 }
 
 function setupPlayerLogic(player, skipBtn, skipTimes, ep) {
@@ -5427,12 +5569,14 @@ function navEp(dir) {
   } 
 }
 
-function setLang(l) {
-  state.lang = l;
-  localStorage.setItem('anexus_default_lang',l==='dub'?'dub':'sub');
-  document.getElementById('lang-sub').classList.toggle('active', l==='sub');
-  document.getElementById('lang-dub').classList.toggle('active', l==='dub');
-  if(state.currentEp) playEp(state.currentEp);
+function setLang(l,opts={}) {
+  const current=window.activePlyrInstance;
+  const pos=opts.resumeTime!=null ? Number(opts.resumeTime)||0 : (current ? Number(current.currentTime)||0 : 0);
+  state.lang = l==='dub' ? 'dub' : 'sub';
+  localStorage.setItem('anexus_default_lang',state.lang);
+  document.getElementById('lang-sub')?.classList.toggle('active', state.lang==='sub');
+  document.getElementById('lang-dub')?.classList.toggle('active', state.lang==='dub');
+  if(state.currentEp) playEp(state.currentEp,{autoFullscreen:!!(!opts.keepPlayer && pendingAutoFullscreen),resumeTime:pos});
 }
 
 // 🚀 URL ROUTING: Updated Popstate Logic
@@ -6760,93 +6904,29 @@ KageWatchAnalytics.init();
 
 <script id="ios-fullscreen-fix">
 (function(){
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // iPhone/iPad: keep Plyr/AnimeNexus as the player. Never call webkitEnterFullscreen().
+  const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   if(!isIOS) return;
-
-  function getVideo(player){
-    return player && (player.media || player.elements?.container?.querySelector('video'));
-  }
-
-  function install(player){
-    if(!player || !player.elements?.container) return;
-    const container=player.elements.container;
-    const video=getVideo(player);
-    if(!video) return;
-    video.setAttribute('playsinline','');
-    video.setAttribute('webkit-playsinline','');
-    video.playsInline=true;
-
-    const button=container.querySelector('.plyr__control[data-plyr="fullscreen"]');
-    if(!button || button.dataset.anexusIOSFullscreen==='1') return;
-    button.dataset.anexusIOSFullscreen='1';
-
-    const sync=()=>{
-      const native=!!video.webkitDisplayingFullscreen;
-      const standard=!!document.fullscreenElement || !!document.webkitFullscreenElement;
-      container.classList.toggle('anexus-ios-fs',native||standard);
-    };
-
-    const exit=()=>{
-      try{
-        if(video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen==='function'){
-          video.webkitExitFullscreen(); return;
-        }
-        if(document.fullscreenElement && document.exitFullscreen){
-          const r=document.exitFullscreen(); if(r?.catch) r.catch(()=>{}); return;
-        }
-        if(document.webkitFullscreenElement && document.webkitExitFullscreen){
-          document.webkitExitFullscreen();
-        }
-      }catch(_){ }
-    };
-
-    const enter=()=>{
-      try{
-        /* iPhone: use Safari's native video fullscreen. */
-        const isPhone = /iPhone|iPod/i.test(navigator.userAgent);
-        if(isPhone && typeof video.webkitEnterFullscreen==='function'){
-          video.webkitEnterFullscreen();
-          return;
-        }
-        /* iPadOS: prefer the standard Fullscreen API when exposed. */
-        if(typeof container.requestFullscreen==='function'){
-          const r=container.requestFullscreen({navigationUI:'hide'});
-          if(r?.catch) r.catch(()=>{});
-          return;
-        }
-        if(typeof video.webkitEnterFullscreen==='function'){
-          video.webkitEnterFullscreen();
-          return;
-        }
-        /* Let Plyr attempt its own implementation as the final fallback. */
-        if(player.fullscreen?.enter) player.fullscreen.enter();
-      }catch(_){
-        try{ if(player.fullscreen?.enter) player.fullscreen.enter(); }catch(__){}
-      }
-    };
-
-    button.addEventListener('click',e=>{
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      if(video.webkitDisplayingFullscreen || document.fullscreenElement || document.webkitFullscreenElement) exit();
-      else enter();
-    },true);
-
-    video.addEventListener('webkitbeginfullscreen',sync);
-    video.addEventListener('webkitendfullscreen',sync);
-    document.addEventListener('fullscreenchange',sync);
-    document.addEventListener('webkitfullscreenchange',sync);
-    window.addEventListener('orientationchange',()=>setTimeout(sync,250));
-    window.addEventListener('resize',()=>setTimeout(sync,50));
-    sync();
-  }
-
-  const scan=()=>{
-    if(window.activePlyrInstance) install(window.activePlyrInstance);
-    document.querySelectorAll('.plyr').forEach(el=>{ if(el.plyr) install(el.plyr); });
+  const install=()=>{
+    document.querySelectorAll('.plyr').forEach(el=>{
+      const player=el.plyr;
+      if(!player || !player.elements?.container) return;
+      const btn=player.elements.container.querySelector('.plyr__control[data-plyr="fullscreen"]');
+      if(!btn || btn.dataset.anexusWebFullscreen==='1') return;
+      btn.dataset.anexusWebFullscreen='1';
+      btn.addEventListener('click',e=>{
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        toggleAnexusFullscreen(player);
+      },true);
+    });
   };
-  setInterval(scan,700);
-  document.addEventListener('DOMContentLoaded',scan);
+  setInterval(install,700);
+  document.addEventListener('fullscreenchange',()=>{
+    if(document.fullscreenElement) document.exitFullscreen?.().catch?.(()=>{});
+  });
+  document.addEventListener('webkitfullscreenchange',()=>{
+    if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+  });
 })();
 </script>
 
