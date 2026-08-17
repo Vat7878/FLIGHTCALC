@@ -4554,7 +4554,7 @@ function buildHero(list){
     slide.className='hero-slide'+(i===0?' active':'');
     
     // Use the exact banner metadata carried by the normal catalog object.
-    const bannerUrl = a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '';
+    const bannerUrl = a?.coverImage?.extraLarge || a?.coverImage?.large || a?.bannerImage || '';
     const coverUrl = a?.coverImage?.extraLarge || a?.coverImage?.large || '';
     
     slide.innerHTML=`
@@ -4885,16 +4885,28 @@ function showEpisodePlayer(ep,opts={}){
   playEp(ep,{resumeTime:pendingResumeTime,autoFullscreen:pendingAutoFullscreen});
 }
 function minimizePlayerToOptions(){
-  // Minimize is a real exit from the player, not a cosmetic toggle.
-  try { exitAnexusWebFullscreen(window.activePlyrInstance || window.player); } catch(_) {}
-  document.body.classList.remove('anexus-player-fullscreen');
+  // Minimize is a deterministic navigation back to the current anime hero page.
   const view=document.getElementById('watch-view');
-  if(view) view.classList.remove('player-mode','anexus-direct-player','player-options-mode');
-  try { destroyActivePlayer(); } catch(_) {}
   const wrap=document.getElementById('player-wrap');
+  try {
+    const p=window.activePlyrInstance || window.player;
+    if(p?.pause) p.pause();
+    if(p) exitAnexusWebFullscreen(p);
+  } catch(_) {}
+  document.body.classList.remove('anexus-player-fullscreen');
+  document.documentElement.classList.remove('anexus-player-fullscreen');
+  if(view){
+    view.classList.remove('player-mode','anexus-direct-player','player-options-mode');
+    view.style.removeProperty('display');
+  }
+  try { destroyActivePlayer(); } catch(_) {}
   if(wrap) wrap.innerHTML='';
-  renderAnimeLanding();
-  window.scrollTo({top:0,left:0,behavior:'instant'});
+  // Ensure the already-loaded anime detail state is rendered, rather than routing
+  // through the watch page again.
+  try { renderAnimeLanding(); } catch(_) {}
+  const landing=document.getElementById('anime-landing');
+  if(landing) landing.scrollIntoView({block:'start',behavior:'instant'});
+  else window.scrollTo(0,0);
 }
 function backToAnimeLanding(){
   const view=document.getElementById('watch-view');
@@ -5902,7 +5914,7 @@ function scrollDates(dir) {
   // the normal Trending Now catalog. There is no separate/hardcoded hero
   // catalogue or manually selected hero artwork.
   const normalCatalogHero = tList
-    .filter(a => a && (a.bannerImage || a.coverImage?.extraLarge || a.coverImage?.large))
+    .filter(a => a && (a.coverImage?.extraLarge || a.coverImage?.large || a.bannerImage))
     .slice(0,5);
   buildHero(normalCatalogHero);
   fillStrip('strip-trending', tList);
@@ -7024,6 +7036,27 @@ KageWatchAnalytics.init();
 #hero .hero-bg{inset:0 !important;transform:none !important;filter:none !important;background-repeat:no-repeat !important;background-position:center top !important;background-size:100% auto !important;background-color:#000 !important;}
 #hero .hero-right{display:none !important;}
 </style>
+
+<style id="anexus-minimize-final-fix">
+.anexus-player-menu .anexus-minimize-btn{position:relative!important;z-index:2147483648!important;pointer-events:auto!important;touch-action:manipulation!important;}
+</style>
+<script id="anexus-minimize-final-fix-script">
+(function(){
+  function handle(e){
+    const btn=e.target.closest && e.target.closest('.anexus-player-menu [data-minimize]');
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    try{ btn.closest('.anexus-player-menu')?.querySelector('.anexus-menu-close')?.click(); }catch(_){ }
+    setTimeout(function(){
+      try{ minimizePlayerToOptions(); }catch(_){ try{ backToAnimeLanding(); }catch(__){} }
+    },20);
+  }
+  document.addEventListener('pointerdown',handle,true);
+  document.addEventListener('click',handle,true);
+  document.addEventListener('touchend',handle,true);
+})();
+</script>
 </body>
 </html><style id="anexus-hero-true-fit">
 /* Homepage Spotlight: fit the real AniList banner to the viewport width. Never crop/zoom it. */
