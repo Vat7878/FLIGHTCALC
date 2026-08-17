@@ -7470,3 +7470,48 @@ body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:
   background-color:#000!important;
 }
 </style>
+
+<style id="anexus-minimize-final-hard-fix">
+  /* Final minimize interaction: make both minimize controls directly tappable. */
+  .anexus-player-menu .anexus-minimize-btn,
+  #watch-view .player-back {
+    position:relative !important;
+    z-index:2147483647 !important;
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+    -webkit-tap-highlight-color:transparent !important;
+  }
+</style>
+<script id="anexus-minimize-final-hard-fix-script">
+(function(){
+  let minimizing = false;
+  function minimizeNow(e){
+    const target = e.target && e.target.closest ? e.target.closest(
+      '.anexus-player-menu [data-minimize], #watch-view .player-back'
+    ) : null;
+    if(!target || minimizing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    minimizing = true;
+    try {
+      const menu = target.closest('.anexus-player-menu');
+      if(menu) menu.classList.remove('open');
+    } catch(_) {}
+    // Use the existing navigation function directly. Do not route through
+    // the old minimize helper, which could be swallowed by Plyr's controls.
+    setTimeout(function(){
+      try {
+        if(typeof backToAnimeLanding === 'function') backToAnimeLanding();
+        else if(typeof minimizePlayerToOptions === 'function') minimizePlayerToOptions();
+      } catch(_) {
+        try { window.location.reload(); } catch(__) {}
+      }
+      minimizing = false;
+    }, 30);
+  }
+  document.addEventListener('pointerdown', minimizeNow, true);
+  document.addEventListener('touchstart', minimizeNow, {capture:true, passive:false});
+  document.addEventListener('click', minimizeNow, true);
+})();
+</script>
