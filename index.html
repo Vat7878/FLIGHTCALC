@@ -3225,112 +3225,12 @@ window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
       <div class="h-scroll" id="strip-romance"></div>
     </section>
     
-    <section class="schedule-section" id="schedule-section">
-      <div class="schedule-header">
-        <h2>Estimated Schedule <span class="schedule-time" id="realtime-clock">- Now: 7/6/2026 10:37:55 AM</span></h2>
+    <section class="strip-section catalog-row upcoming-row" id="upcoming-section" style="padding-bottom:20px">
+      <div class="strip-head">
+        <div class="strip-title"><span class="bar"></span>Upcoming</div>
+        <span class="see-all" onclick="goSearchView('airing','Currently Airing')" style="cursor:pointer;font-size:0.8rem;color:var(--muted2)">See all →</span>
       </div>
-      <div class="schedule-dates-wrap">
-        <button class="date-nav prev" onclick="scrollDates(-1)">❮</button>
-        <div class="schedule-dates" id="schedule-dates-container">
-      <div class="date-item" data-start="1783189800" data-end="1783276199" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 5</span>
-        <span class="d-day">SUN</span>
-      </div>
-    
-      <div class="date-item active" data-start="1783276200" data-end="1783362599" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 6</span>
-        <span class="d-day">MON</span>
-      </div>
-    
-      <div class="date-item" data-start="1783362600" data-end="1783448999" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 7</span>
-        <span class="d-day">TUE</span>
-      </div>
-    
-      <div class="date-item" data-start="1783449000" data-end="1783535399" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 8</span>
-        <span class="d-day">WED</span>
-      </div>
-    
-      <div class="date-item" data-start="1783535400" data-end="1783621799" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 9</span>
-        <span class="d-day">THU</span>
-      </div>
-    
-      <div class="date-item" data-start="1783621800" data-end="1783708199" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 10</span>
-        <span class="d-day">FRI</span>
-      </div>
-    
-      <div class="date-item" data-start="1783708200" data-end="1783794599" onclick="setActiveDate(this)">
-        <span class="d-mon">JUL 11</span>
-        <span class="d-day">SAT</span>
-      </div>
-    </div>
-        <button class="date-nav next" onclick="scrollDates(1)">❯</button>
-      </div>
-      <div class="schedule-list" id="schedule-list-container">
-      <div class="schedule-row">
-        <span class="s-time">07:30 AM</span>
-        <a class="s-title" href="watch/137653/xian-ni.html" onclick="event.preventDefault(); openWatchView(137653);">Xian Ni</a>
-        <a class="s-ep" href="watch/137653/xian-ni.html" onclick="event.preventDefault(); openWatchView(137653);">▶ Episode 148</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">05:27 PM</span>
-        <a class="s-title" href="watch/169582/saikyou-degarashi-ouji-no-anyaku-teii-arasoi-munou-wo-enjiru-ss-rank-ouji-wa-koui-keishou-sen-wo-kage-kara-shihai-suru.html" onclick="event.preventDefault(); openWatchView(169582);">Saikyou Degarashi Ouji no Anyaku Teii Arasoi: Munou wo Enjiru SS Rank Ouji wa Koui Keishou-sen wo Kage kara Shihai suru</a>
-        <a class="s-ep" href="watch/169582/saikyou-degarashi-ouji-no-anyaku-teii-arasoi-munou-wo-enjiru-ss-rank-ouji-wa-koui-keishou-sen-wo-kage-kara-shihai-suru.html" onclick="event.preventDefault(); openWatchView(169582);">▶ Episode 1</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">05:30 PM</span>
-        <a class="s-title" href="watch/202269/toumei-na-yoru-ni-kakeru-kimi-to-me-ni-mienai-koi-wo-shita.html" onclick="event.preventDefault(); openWatchView(202269);">Toumei na Yoru ni Kakeru Kimi to, Me ni Mienai Koi wo Shita.</a>
-        <a class="s-ep" href="watch/202269/toumei-na-yoru-ni-kakeru-kimi-to-me-ni-mienai-koi-wo-shita.html" onclick="event.preventDefault(); openWatchView(202269);">▶ Episode 1</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">06:30 PM</span>
-        <a class="s-title" href="watch/206521/world-is-dancing.html" onclick="event.preventDefault(); openWatchView(206521);">World Is Dancing</a>
-        <a class="s-ep" href="watch/206521/world-is-dancing.html" onclick="event.preventDefault(); openWatchView(206521);">▶ Episode 2</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">07:00 PM</span>
-        <a class="s-title" href="watch/199408/buchigire-reijou-wa-houfuku-wo-chikaimashita-madousho-no-chikara-de-sokoku-wo-tataki-tsubushimasu.html" onclick="event.preventDefault(); openWatchView(199408);">Buchigire Reijou wa Houfuku wo Chikaimashita.: Madousho no Chikara de Sokoku wo Tataki Tsubushimasu</a>
-        <a class="s-ep" href="watch/199408/buchigire-reijou-wa-houfuku-wo-chikaimashita-madousho-no-chikara-de-sokoku-wo-tataki-tsubushimasu.html" onclick="event.preventDefault(); openWatchView(199408);">▶ Episode 1</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">07:30 PM</span>
-        <a class="s-title" href="watch/195833/honoo-no-toukyuujyo-dodge-danko.html" onclick="event.preventDefault(); openWatchView(195833);">Honoo no Toukyuujyo Dodge Danko</a>
-        <a class="s-ep" href="watch/195833/honoo-no-toukyuujyo-dodge-danko.html" onclick="event.preventDefault(); openWatchView(195833);">▶ Episode 1</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">07:30 PM</span>
-        <a class="s-title" href="watch/209504/suterare-seijo-no-isekai-gohantabi-kakure-skill-de-camping-car-wo-shoukan-shimashita.html" onclick="event.preventDefault(); openWatchView(209504);">Suterare Seijo no Isekai Gohantabi: Kakure Skill de Camping Car wo Shoukan Shimashita</a>
-        <a class="s-ep" href="watch/209504/suterare-seijo-no-isekai-gohantabi-kakure-skill-de-camping-car-wo-shoukan-shimashita.html" onclick="event.preventDefault(); openWatchView(209504);">▶ Episode 1</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">08:00 PM</span>
-        <a class="s-title" href="watch/169583/tenkousaki-no-seiso-karen-na-bishoujo-ga-mukashi-danshi-to-omotte-issho-ni-asonda-osananajimi-datta-ken.html" onclick="event.preventDefault(); openWatchView(169583);">Tenkousaki no Seiso Karen na Bishoujo ga, Mukashi Danshi to Omotte Issho ni Asonda Osananajimi datta Ken</a>
-        <a class="s-ep" href="watch/169583/tenkousaki-no-seiso-karen-na-bishoujo-ga-mukashi-danshi-to-omotte-issho-ni-asonda-osananajimi-datta-ken.html" onclick="event.preventDefault(); openWatchView(169583);">▶ Episode 1</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">08:30 PM</span>
-        <a class="s-title" href="watch/197754/liar-game.html" onclick="event.preventDefault(); openWatchView(197754);">LIAR GAME</a>
-        <a class="s-ep" href="watch/197754/liar-game.html" onclick="event.preventDefault(); openWatchView(197754);">▶ Episode 14</a>
-      </div>
-    
-      <div class="schedule-row">
-        <span class="s-time">08:30 PM</span>
-        <a class="s-title" href="watch/199111/grand-blue-season-3.html" onclick="event.preventDefault(); openWatchView(199111);">Grand Blue Season 3</a>
-        <a class="s-ep" href="watch/199111/grand-blue-season-3.html" onclick="event.preventDefault(); openWatchView(199111);">▶ Episode 1</a>
-      </div>
-    </div>
-      <div class="schedule-more" id="schedule-more-btn" style="display:none;">Show more</div>
+      <div class="h-scroll" id="strip-upcoming"></div>
     </section>
 
   </div>
@@ -4370,6 +4270,42 @@ function fillStrip(id,list){
   list.forEach((a, i)=>c.appendChild(makeCard(a, i, false)));
 }
 
+function fillUpcomingStrip(id, schedules){
+  const c = document.getElementById(id);
+  if (!c) return;
+  c.innerHTML = '';
+
+  const seen = new Set();
+  const items = [];
+  (schedules || []).forEach(item => {
+    const media = item?.media;
+    if (!media || seen.has(String(media.id))) return;
+    seen.add(String(media.id));
+    items.push({ media, airingAt: item.airingAt, episode: item.episode });
+  });
+
+  if (!items.length) {
+    c.innerHTML = `<div class="empty-state"><p>No upcoming releases found.</p></div>`;
+    return;
+  }
+
+  items.forEach((item, i) => {
+    const el = makeCard(item.media, i, false);
+    const body = el.querySelector('.a-card-body');
+    if (body) {
+      const d = new Date(item.airingAt * 1000);
+      const dateText = d.toLocaleDateString([], { month:'short', day:'numeric', year:'numeric' });
+      const timeText = d.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+      const epText = item.episode ? `Episode ${item.episode}` : 'Upcoming';
+      const meta = document.createElement('div');
+      meta.className = 'upcoming-meta';
+      meta.innerHTML = `<span>${dateText}</span><span>${timeText}</span><span>${epText}</span>`;
+      body.appendChild(meta);
+    }
+    c.appendChild(el);
+  });
+}
+
 function buildHero(list){
   heroAnimes=list; 
   const cont = document.getElementById('hero-slider-container');
@@ -4438,7 +4374,7 @@ document.getElementById('hero').addEventListener('mousemove', e => {
     const y = (clientY / window.innerHeight - 0.5) * 20;
     const activeBg = document.querySelector('.hero-slide.active .hero-bg');
     const activeCover = document.querySelector('.hero-slide.active .hero-cover');
-    if (activeBg) activeBg.style.transform = `scale(1.05) translate3d(${x}px, ${y}px, 0)`;
+    if (activeBg) activeBg.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     if (activeCover) activeCover.style.transform = `perspective(1000px) rotateY(${x}deg) rotateX(${-y}deg)`;
   });
 }, { passive: true });
@@ -5450,12 +5386,10 @@ function scrollDates(dir) {
   if (window.requestIdleCallback) {
     requestIdleCallback(() => {
       renderHistory();
-      initScheduleUI();
     });
   } else {
     setTimeout(() => {
       renderHistory();
-      initScheduleUI();
     }, 1);
   }
 
@@ -5514,7 +5448,7 @@ function scrollDates(dir) {
     
   await initialWatchPromise;
 
-  const [trending, airing, top, finished, action, fantasy, adventure, comedy, drama, romance] = await Promise.all([
+  const [trending, airing, top, finished, action, fantasy, adventure, comedy, drama, romance, onePiece, upcoming] = await Promise.all([
     alQ(`query{Page(perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:POPULARITY_DESC,type:ANIME,status:RELEASING,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:SCORE_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
@@ -5524,11 +5458,16 @@ function scrollDates(dir) {
     alQ(`query{Page(perPage:20){media(genre:"Adventure",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(genre:"Comedy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(genre:"Drama",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Romance",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
+    alQ(`query{Page(perPage:20){media(genre:"Romance",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
+    alQ(`query{Media(id:21,type:ANIME){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description nextAiringEpisode { episode airingAt }}}`),
+    alQ(`query($start:Int,$end:Int){Page(page:1,perPage:24){airingSchedules(airingAt_greater:$start,airingAt_lesser:$end,sort:TIME){airingAt episode media{id title{romaji english} coverImage{large extraLarge} bannerImage episodes averageScore startDate{year} format genres status description}}}}`, {start: Math.floor(Date.now()/1000), end: Math.floor(Date.now()/1000)+14*24*60*60})
   ]);
   
   const tList=trending?.Page?.media||[];
-  buildHero(tList.slice(0,5));
+  // Keep the homepage Spotlight driven by the normal trending rotation.
+  // One Piece is prioritized only in the Upcoming/Schedule catalog row below.
+  const heroList = tList.slice(0,5);
+  buildHero(heroList);
   fillStrip('strip-trending', tList);
   fillStrip('strip-airing', airing?.Page?.media||[]);
   fillStrip('strip-finished', finished?.Page?.media||[]);
@@ -5539,6 +5478,16 @@ function scrollDates(dir) {
   fillStrip('strip-comedy', comedy?.Page?.media||[]);
   fillStrip('strip-drama', drama?.Page?.media||[]);
   fillStrip('strip-romance', romance?.Page?.media||[]);
+
+  // Upcoming/Schedule catalog: One Piece gets first priority when AniList
+  // provides its next airing time, followed by the normal schedule feed.
+  const upcomingSchedules = upcoming?.Page?.airingSchedules || [];
+  const opNext = opMedia?.nextAiringEpisode;
+  const opSchedule = (opMedia && opNext && opNext.airingAt)
+    ? [{ airingAt: opNext.airingAt, episode: opNext.episode, media: opMedia }]
+    : [];
+  const nonOnePieceUpcoming = upcomingSchedules.filter(item => String(item?.media?.id) !== '21');
+  fillUpcomingStrip('strip-upcoming', [...opSchedule, ...nonOnePieceUpcoming]);
 
   if (window.__animeNexusStartupReady) window.__animeNexusStartupReady();
   
@@ -6838,3 +6787,62 @@ KageWatchAnalytics.init();
 }
 </style>
 
+
+<style id="anexus-home-hero-final-fix">
+/* Homepage Spotlight: no blur, no artificial zoom, left-aligned content. */
+#hero .hero-bg{
+  filter:none !important;
+  transform:none !important;
+  inset:0 !important;
+  background-size:cover !important;
+  background-position:center center !important;
+}
+#hero .hero-content{
+  margin:0 !important;
+  max-width:none !important;
+  width:100% !important;
+  text-align:left !important;
+  justify-content:flex-start !important;
+  align-items:flex-end !important;
+}
+#hero .hero-left{
+  text-align:left !important;
+  margin:0 !important;
+}
+#hero .hero-genres,
+#hero .hero-actions{justify-content:flex-start !important;}
+#hero .hero-right{display:none !important;}
+
+/* Keep the artwork from being needlessly enlarged on small screens.
+   The fade remains strong enough that the lower content blends into black. */
+@media (max-width:600px){
+  #hero .hero-bg{
+    background-size:cover !important;
+    background-position:center center !important;
+  }
+  #hero .hero-content{
+    padding-left:max(16px, env(safe-area-inset-left)) !important;
+    padding-right:max(16px, env(safe-area-inset-right)) !important;
+    padding-bottom:calc(44px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Upcoming catalog row */
+.upcoming-row .a-card-body{min-height:94px !important;}
+.upcoming-meta{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin-top:6px;
+  color:var(--muted2);
+  font-size:.68rem;
+  line-height:1.25;
+  padding-right:26px;
+}
+.upcoming-meta span:first-child{color:#fff;font-weight:700;}
+.upcoming-meta span:nth-child(2){color:var(--accent);font-weight:700;}
+@media(max-width:600px){
+  .upcoming-row .a-card{width:145px;}
+  .upcoming-row .a-card-body{min-height:98px !important;}
+}
+</style>
