@@ -5451,12 +5451,9 @@ function injectPlayerMenu(player){
     e.preventDefault(); e.stopPropagation(); closeMenu();
   });
   menu.querySelector('[data-minimize]').addEventListener('pointerup',(e)=>{
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation?.();
     closeMenu();
-    // Exit the AnimeNexus player and return to this anime's detail/hero page.
-    setTimeout(()=>{
-      try { minimizePlayerToOptions(); } catch (_) { try { backToAnimeLanding(); } catch(__) {} }
-    }, 0);
+    try { minimizePlayerToOptions(); } catch (_) { try { backToAnimeLanding(); } catch(__) {} }
   });
   renderPlayerStreamChoices(menu);
   syncPlayerMenuState(menu);
@@ -7025,6 +7022,27 @@ KageWatchAnalytics.init();
 
 
 
+
+<style id="anexus-corner-minimize-label">
+body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
+  content:none!important;
+}
+</style>
+<script id="anexus-corner-minimize-final">
+(function(){
+  function label(){
+    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(function(btn){
+      const fs=document.body.classList.contains('anexus-player-fullscreen');
+      btn.setAttribute('aria-label',fs?'Minimize player':'Fullscreen player');
+      btn.setAttribute('title',fs?'Minimize player':'Fullscreen player');
+    });
+  }
+  label();
+  const ob=new MutationObserver(label);
+  ob.observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
+  setInterval(label,1000);
+})();
+</script>
 </body>
 </html><style id="anexus-hero-true-fit">
 /* Homepage Spotlight: fit the real AniList banner to the viewport width. Never crop/zoom it. */
@@ -7050,6 +7068,27 @@ KageWatchAnalytics.init();
 #hero .hero-bg{inset:0 !important;transform:none !important;filter:none !important;background-repeat:no-repeat !important;background-position:center top !important;background-size:100% auto !important;background-color:#000 !important;}
 #hero .hero-right{display:none !important;}
 </style>
+
+<style id="anexus-corner-minimize-label">
+body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
+  content:none!important;
+}
+</style>
+<script id="anexus-corner-minimize-final">
+(function(){
+  function label(){
+    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(function(btn){
+      const fs=document.body.classList.contains('anexus-player-fullscreen');
+      btn.setAttribute('aria-label',fs?'Minimize player':'Fullscreen player');
+      btn.setAttribute('title',fs?'Minimize player':'Fullscreen player');
+    });
+  }
+  label();
+  const ob=new MutationObserver(label);
+  ob.observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
+  setInterval(label,1000);
+})();
+</script>
 </body>
 
 <style id="anexus-opening-hero-exact-detail-style">
@@ -7348,6 +7387,27 @@ body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:
 #hero .hero-bg{inset:0 !important;transform:none !important;filter:none !important;background-repeat:no-repeat !important;background-position:center top !important;background-size:100% auto !important;background-color:#000 !important;}
 #hero .hero-right{display:none !important;}
 </style>
+
+<style id="anexus-corner-minimize-label">
+body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
+  content:none!important;
+}
+</style>
+<script id="anexus-corner-minimize-final">
+(function(){
+  function label(){
+    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(function(btn){
+      const fs=document.body.classList.contains('anexus-player-fullscreen');
+      btn.setAttribute('aria-label',fs?'Minimize player':'Fullscreen player');
+      btn.setAttribute('title',fs?'Minimize player':'Fullscreen player');
+    });
+  }
+  label();
+  const ob=new MutationObserver(label);
+  ob.observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
+  setInterval(label,1000);
+})();
+</script>
 </body>
 
 <style id="anexus-normal-catalog-banner-ULTIMATE">
@@ -7523,8 +7583,18 @@ html,body,#home-view,#search-view,#watch-view,.view{width:100%!important;max-wid
       e.stopImmediatePropagation?.();
       suppressFullscreenClickUntil=performance.now()+700;
       try{
-        if(player.elements?.container?.classList.contains('anexus-web-fullscreen')){
-          exitAnexusWebFullscreen(player);
+        const inAnimeNexusFullscreen =
+          document.body.classList.contains('anexus-player-fullscreen') ||
+          document.documentElement.classList.contains('anexus-player-fullscreen') ||
+          player.elements?.container?.classList.contains('anexus-web-fullscreen');
+
+        // In the AnimeNexus fullscreen player, the corner button is the
+        // player's MINIMIZE control: leave playback and return to the
+        // current anime-specific hero/detail page. Do not merely exit
+        // fullscreen and leave the watch page underneath it.
+        if(inAnimeNexusFullscreen){
+          try{ minimizePlayerToOptions(); }
+          catch(_){ try{ backToAnimeLanding(); }catch(__){} }
         }else{
           enterAnexusWebFullscreen(player);
         }
