@@ -1575,7 +1575,7 @@ body.anexus-player-fullscreen{overflow:hidden!important;touch-action:none!import
   width:100%!important;max-width:none!important;height:100%!important;margin:0!important;padding:0!important;
 }
 #watch-view.anexus-direct-player .watch-left{width:100%!important;height:100%!important;padding:0!important}
-#watch-view.anexus-direct-player .player-back{display:flex!important;position:absolute!important;top:12px!important;left:12px!important;z-index:2147483100!important;margin:0!important;background:rgba(0,0,0,.65)!important}
+#watch-view.anexus-direct-player .player-back{display:none!important}
 #watch-view.anexus-direct-player .player-container{width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important;margin:0!important}
 #watch-view.anexus-direct-player .player-actions,
 #watch-view.anexus-direct-player .server-box,
@@ -1588,6 +1588,16 @@ body.anexus-player-fullscreen{overflow:hidden!important;touch-action:none!import
 #watch-view.anexus-direct-player video{width:100%!important;height:100%!important;object-fit:contain!important}
 @supports not (height:100dvh){#watch-view.anexus-direct-player{height:100vh!important}}
 @media (orientation:portrait) and (max-width:700px){#watch-view.anexus-direct-player .player-container video{object-fit:contain!important}}
+</style>
+<style id="anexus-unified-player-menu-fix">
+/* Keep the player visually clean: custom playback choices live inside the existing Plyr settings control. */
+.anexus-player-menu{position:absolute;inset:0;z-index:45;pointer-events:none;display:block;}
+.anexus-player-menu .anexus-menu-panel{position:absolute;right:12px;bottom:58px;width:min(310px,calc(100% - 24px));max-height:min(72vh,520px);overflow:auto;padding:14px;border-radius:12px;background:rgba(10,10,18,.96);border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 50px rgba(0,0,0,.65);opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.16s ease;pointer-events:none;}
+.anexus-player-menu.open .anexus-menu-panel{opacity:1;visibility:visible;transform:none;pointer-events:auto;}
+.anexus-menu-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.anexus-episodes-btn,.anexus-minimize-btn{height:40px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-weight:700;cursor:pointer;}
+.anexus-episodes-btn:hover,.anexus-minimize-btn:hover{background:rgba(255,255,255,.12);}
+@media(max-width:700px){.anexus-player-menu .anexus-menu-panel{right:10px;bottom:56px;width:min(300px,calc(100% - 20px));}}
 </style>
 </head>
 <body>
@@ -5404,16 +5414,12 @@ function injectPlayerMenu(player){
       </div>
       <div class="anexus-menu-title">Stream</div>
       <div class="anexus-menu-row" data-streams></div>
-      <button type="button" class="anexus-episodes-btn" data-episodes>☰  Episodes &amp; Anime</button>
-    </div>
-    <button type="button" class="anexus-menu-settings" aria-label="Audio and stream options">⚙</button>
-    <button type="button" class="anexus-menu-close" aria-label="Back to episodes">⋮</button>`;
+      <div class="anexus-menu-actions">
+        <button type="button" class="anexus-episodes-btn" data-episodes>⋮ Episodes &amp; Anime</button>
+        <button type="button" class="anexus-minimize-btn" data-minimize>↓ Minimize</button>
+      </div>
+    </div>`;
   box.appendChild(menu);
-  const panel=menu.querySelector('.anexus-menu-panel');
-  const settings=menu.querySelector('.anexus-menu-settings');
-  const dot=menu.querySelector('.anexus-menu-close');
-  settings.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();menu.classList.toggle('open');syncPlayerMenuState(menu);});
-  dot.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();backToAnimeLanding();});
   menu.querySelectorAll('[data-lang]').forEach(btn=>btn.addEventListener('click',()=>{
     const l=btn.dataset.lang;
     const pos=Number(player.currentTime)||0;
@@ -5424,8 +5430,23 @@ function injectPlayerMenu(player){
     menu.classList.remove('open');
     backToAnimeLanding();
   });
+  menu.querySelector('[data-minimize]').addEventListener('click',()=>{
+    menu.classList.remove('open');
+    backToAnimeLanding();
+  });
   renderPlayerStreamChoices(menu);
   syncPlayerMenuState(menu);
+
+  // Use the player's existing settings button as the only entry point.
+  const settingsBtn=box.querySelector('.plyr__control[data-plyr="settings"]');
+  if(settingsBtn && settingsBtn.dataset.anexusUnifiedSettings!=='1'){
+    settingsBtn.dataset.anexusUnifiedSettings='1';
+    settingsBtn.addEventListener('click',e=>{
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      menu.classList.toggle('open');
+      syncPlayerMenuState(menu);
+    },true);
+  }
 }
 function renderPlayerStreamChoices(menu){
   const wrap=menu?.querySelector('[data-streams]');
@@ -6885,6 +6906,20 @@ KageWatchAnalytics.init();
     </script>
 
 
+
+<script id="anexus-unified-player-menu-bootstrap">
+(function(){
+  function scan(){
+    const players=[];
+    if(window.activePlyrInstance) players.push(window.activePlyrInstance);
+    document.querySelectorAll('.plyr').forEach(el=>{if(el.plyr) players.push(el.plyr);});
+    players.forEach(p=>{try{injectPlayerMenu(p);}catch(_){}});
+  }
+  const timer=setInterval(scan,500);
+  document.addEventListener('DOMContentLoaded',scan);
+  setTimeout(()=>clearInterval(timer),30000);
+})();
+</script>
 <script id="custom-center-player">
 (function () {
   function attach(player) {
@@ -6909,8 +6944,9 @@ KageWatchAnalytics.init();
         !!player.media?.webkitDisplayingFullscreen ||
         !!document.fullscreenElement ||
         !!document.webkitFullscreenElement;
-      if (!nativeIOSFullscreen && (!player.fullscreen || !player.fullscreen.active)) return;
-      if (e.target.closest(".plyr__controls,.plyr__control,.plyr__menu")) return;
+      const animeNexusFullscreen = document.body.classList.contains('anexus-player-fullscreen') || box.classList.contains('anexus-web-fullscreen') || document.getElementById('watch-view')?.classList.contains('anexus-direct-player');
+      if (!nativeIOSFullscreen && !animeNexusFullscreen && (!player.fullscreen || !player.fullscreen.active)) return;
+      if (e.target.closest('.plyr__controls,.plyr__control,.plyr__menu,.anexus-player-menu')) return;
 
       const r = box.getBoundingClientRect();
       const x = e.clientX - r.left, y = e.clientY - r.top;
