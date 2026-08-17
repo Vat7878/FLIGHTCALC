@@ -1360,6 +1360,66 @@ video {
   #anime-landing .landing-watch-btn{font-size:.82rem;padding-inline:9px}
   #anime-landing .landing-watch-icon{font-size:1em}
 }
+<style id="anexus-detail-hero-v3">
+/* Anime detail hero: artwork is the hero surface, not a separate banner. */
+#anime-landing .landing-hero{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:#000;
+  min-height:0;
+  height:clamp(620px,82svh,900px);
+}
+#anime-landing .landing-hero::before{
+  content:"";
+  position:absolute;
+  inset:-1.5%;
+  z-index:0;
+  background-image:var(--landing-art, none);
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center 18%;
+  filter:blur(7px);
+  transform:scale(1.045);
+  transform-origin:center center;
+}
+#anime-landing .landing-hero img{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+#anime-landing .landing-hero-shade{
+  z-index:1;
+  background:
+    linear-gradient(180deg,
+      rgba(0,0,0,.04) 0%,
+      rgba(0,0,0,.04) 32%,
+      rgba(0,0,0,.16) 51%,
+      rgba(0,0,0,.48) 68%,
+      rgba(0,0,0,.80) 82%,
+      rgba(0,0,0,.96) 93%,
+      #000 100%);
+}
+#anime-landing .landing-hero-gradient{
+  z-index:2;
+  height:52%;
+  background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.12) 18%,rgba(0,0,0,.52) 52%,rgba(0,0,0,.90) 78%,#000 100%);
+}
+#anime-landing .landing-hero-content{
+  z-index:3;
+  max-width:940px;
+  bottom:max(22px,env(safe-area-inset-bottom));
+}
+@media(max-width:700px){
+  #anime-landing .landing-hero{
+    height:clamp(600px,84svh,800px);
+  }
+  #anime-landing .landing-hero::before{
+    background-position:center 15%;
+  }
+}
 </style>
 <style id="anexus-series-art-fix">
 /* More From This Series: never let the artwork collapse/hide. */
@@ -4654,9 +4714,22 @@ function renderAnimeLanding(){
   // Keep the existing banner resolver (including the custom One Piece artwork) untouched.
   const banner=state.animeBanner||state.animeCover||'';
   title.textContent=state.animeTitle||'Anime';
+  // Keep the existing image metadata/source, including the custom One Piece resolver,
+  // but use that same artwork as the actual full hero surface.
   img.src=banner;
   img.alt=`${state.animeTitle||'Anime'} artwork`;
-  img.onerror=()=>{ if(img.src!==state.animeCover&&state.animeCover){img.src=state.animeCover;} };
+  const hero=img.closest('.landing-hero');
+  const setHeroArt=(src)=>{
+    if(!hero||!src)return;
+    hero.style.setProperty('--landing-art', `url(\"${String(src).replace(/\"/g,'\\\"')}\")`);
+  };
+  setHeroArt(banner);
+  img.onerror=()=>{
+    if(state.animeCover && img.src!==state.animeCover){
+      img.src=state.animeCover;
+      setHeroArt(state.animeCover);
+    }
+  };
 
   const desc=document.getElementById('landing-description');
   if(desc) desc.textContent=state.animeObj?.description ? state.animeObj.description.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim() : 'No description available.';
@@ -5514,31 +5587,53 @@ function scrollDates(dir) {
     
   await initialWatchPromise;
 
-  const [trending, airing, top, finished, action, fantasy, adventure, comedy, drama, romance] = await Promise.all([
+  // Keep the original four core catalogs together. Additional genre catalogs are
+  // loaded sequentially so AniList is not hit by ten simultaneous GraphQL requests.
+  const [trending, airing, top, finished] = await Promise.all([
     alQ(`query{Page(perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:POPULARITY_DESC,type:ANIME,status:RELEASING,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
     alQ(`query{Page(perPage:20){media(sort:SCORE_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(sort:END_DATE_DESC,type:ANIME,status:FINISHED,format:TV,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Action",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Fantasy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Adventure",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Comedy",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Drama",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`),
-    alQ(`query{Page(perPage:20){media(genre:"Romance",sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
+    alQ(`query{Page(perPage:20){media(sort:END_DATE_DESC,type:ANIME,status:FINISHED,format:TV,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`)
   ]);
-  
+
   const tList=trending?.Page?.media||[];
+  const airingList=airing?.Page?.media||[];
+  const topList=top?.Page?.media||[];
+  const finishedList=finished?.Page?.media||[];
   buildHero(tList.slice(0,5));
   fillStrip('strip-trending', tList);
-  fillStrip('strip-airing', airing?.Page?.media||[]);
-  fillStrip('strip-finished', finished?.Page?.media||[]);
-  fillStrip('strip-top', top?.Page?.media||[]);
-  fillStrip('strip-action', action?.Page?.media||[]);
-  fillStrip('strip-fantasy', fantasy?.Page?.media||[]);
-  fillStrip('strip-adventure', adventure?.Page?.media||[]);
-  fillStrip('strip-comedy', comedy?.Page?.media||[]);
-  fillStrip('strip-drama', drama?.Page?.media||[]);
-  fillStrip('strip-romance', romance?.Page?.media||[]);
+  fillStrip('strip-airing', airingList);
+  fillStrip('strip-finished', finishedList);
+  fillStrip('strip-top', topList);
+
+  // Extra rows. Each request is isolated, and a local fallback is used if AniList
+  // rate-limits the genre request so the row never gets stuck on “Nothing found”.
+  const catalogPool=[...tList,...airingList,...topList,...finishedList];
+  const uniqueById=(list)=>{
+    const seen=new Set();
+    return (list||[]).filter(a=>a?.id&&!seen.has(a.id)&&(seen.add(a.id),true));
+  };
+  const genreRows=[
+    ['Action','strip-action'],
+    ['Fantasy','strip-fantasy'],
+    ['Adventure','strip-adventure'],
+    ['Comedy','strip-comedy'],
+    ['Drama','strip-drama'],
+    ['Romance','strip-romance']
+  ];
+  const genreQuery=(genre)=>`query{Page(perPage:20){media(genre:${JSON.stringify(genre)},sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{romaji english} coverImage{large extraLarge} episodes averageScore startDate{year} format genres status bannerImage description}}}`;
+  for(const [genre,id] of genreRows){
+    let list=[];
+    try{
+      const d=await alQ(genreQuery(genre));
+      list=d?.Page?.media||[];
+    }catch(e){ console.warn(`Catalog ${genre} failed`,e); }
+    if(!list.length){
+      list=uniqueById(catalogPool.filter(a=>(a.genres||[]).includes(genre))).slice(0,20);
+    }
+    fillStrip(id, list);
+    await new Promise(r=>setTimeout(r,120));
+  }
 
   if (window.__animeNexusStartupReady) window.__animeNexusStartupReady();
   
