@@ -4888,6 +4888,30 @@ function showAnimeLanding(){
   renderAnimeLanding();
   window.scrollTo(0,0);
 }
+function requestAndroidWebFullscreenFromGesture(target){
+  // Android: use the browser's real Fullscreen API on the existing AnimeNexus
+  // watch surface, while keeping the same Plyr/web player underneath. This is
+  // called synchronously from the episode click so Chrome/WebView can accept
+  // the fullscreen request as a user gesture. iOS/iPadOS keeps the existing
+  // AnimeNexus fullscreen behavior untouched.
+  const isAndroid=/Android/i.test(navigator.userAgent||'');
+  if(!isAndroid || !target || typeof target.requestFullscreen!=='function') return false;
+  try{
+    const p=target.requestFullscreen({navigationUI:'hide'});
+    if(p && typeof p.catch==='function') p.catch(()=>{});
+    return true;
+  }catch(_){ return false; }
+}
+
+function exitAndroidBrowserFullscreen(){
+  try{
+    if(document.fullscreenElement && document.exitFullscreen){
+      const p=document.exitFullscreen();
+      if(p && typeof p.catch==='function') p.catch(()=>{});
+    }
+  }catch(_){}
+}
+
 function showEpisodePlayer(ep,opts={}){
   if(!ep||ep<1||ep>state.totalEps)return;
   const view=document.getElementById('watch-view');
@@ -4896,6 +4920,13 @@ function showEpisodePlayer(ep,opts={}){
   view.classList.add('player-mode','anexus-direct-player');
   document.body.classList.add('anexus-player-fullscreen');
   window.scrollTo(0,0);
+
+  // Android gets true browser fullscreen immediately from the episode click.
+  // The player itself remains the AnimeNexus/Plyr web player; there is no
+  // second fullscreen button press and no Android native video UI.
+  if(opts.autoFullscreen!==false){
+    requestAndroidWebFullscreenFromGesture(view);
+  }
   // Enter our own fullscreen shell immediately. This does not depend on Safari's
   // native video fullscreen or a later async promise, so iPhone/iPad can use the
   // exact same AnimeNexus player as Android and desktop.
@@ -4910,6 +4941,7 @@ function showEpisodePlayer(ep,opts={}){
 }
 function minimizePlayerToOptions(){
   // Minimize is a deterministic navigation back to the current anime hero page.
+  exitAndroidBrowserFullscreen();
   const view=document.getElementById('watch-view');
   const wrap=document.getElementById('player-wrap');
   try {
@@ -4933,6 +4965,7 @@ function minimizePlayerToOptions(){
   else window.scrollTo(0,0);
 }
 function backToAnimeLanding(){
+  exitAndroidBrowserFullscreen();
   const view=document.getElementById('watch-view');
   if(!view) return;
   const activePlayer=window.activePlyrInstance || window.player;
@@ -5451,9 +5484,12 @@ function injectPlayerMenu(player){
     e.preventDefault(); e.stopPropagation(); closeMenu();
   });
   menu.querySelector('[data-minimize]').addEventListener('pointerup',(e)=>{
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation?.();
+    e.preventDefault(); e.stopPropagation();
     closeMenu();
-    try { minimizePlayerToOptions(); } catch (_) { try { backToAnimeLanding(); } catch(__) {} }
+    // Exit the AnimeNexus player and return to this anime's detail/hero page.
+    setTimeout(()=>{
+      try { minimizePlayerToOptions(); } catch (_) { try { backToAnimeLanding(); } catch(__) {} }
+    }, 0);
   });
   renderPlayerStreamChoices(menu);
   syncPlayerMenuState(menu);
@@ -7023,24 +7059,73 @@ KageWatchAnalytics.init();
 
 
 
-<style id="anexus-corner-minimize-label">
-body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
-  content:none!important;
+<style id="anexus-android-real-fullscreen-final">
+/* Android uses real browser fullscreen on the existing watch surface. */
+#watch-view:fullscreen,
+#watch-view:-webkit-full-screen{
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:#000!important;
+  overflow:hidden!important;
 }
+#watch-view:fullscreen .watch-layout,
+#watch-view:-webkit-full-screen .watch-layout,
+#watch-view:fullscreen .watch-left,
+#watch-view:-webkit-full-screen .watch-left,
+#watch-view:fullscreen .player-container,
+#watch-view:-webkit-full-screen .player-container,
+#watch-view:fullscreen .plyr,
+#watch-view:-webkit-full-screen .plyr{
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+}
+#watch-view:fullscreen .player-container,
+#watch-view:-webkit-full-screen .player-container{position:fixed!important;inset:0!important;}
+#watch-view:fullscreen .plyr__video-wrapper,
+#watch-view:-webkit-full-screen .plyr__video-wrapper{height:100%!important;}
 </style>
-<script id="anexus-corner-minimize-final">
+<script id="anexus-android-real-fullscreen-final-script">
 (function(){
-  function label(){
-    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(function(btn){
-      const fs=document.body.classList.contains('anexus-player-fullscreen');
-      btn.setAttribute('aria-label',fs?'Minimize player':'Fullscreen player');
-      btn.setAttribute('title',fs?'Minimize player':'Fullscreen player');
-    });
+  'use strict';
+  const isAndroid=/Android/i.test(navigator.userAgent||'');
+  if(!isAndroid) return;
+
+  // The episode tap starts showEpisodePlayer(), which requests real fullscreen
+  // synchronously. Keep fullscreen state classes synchronized afterward.
+  function sync(){
+    const v=document.getElementById('watch-view');
+    const active=!!document.fullscreenElement;
+    if(active){
+      document.body.classList.add('anexus-player-fullscreen');
+      v?.classList.add('anexus-direct-player');
+    }
   }
-  label();
-  const ob=new MutationObserver(label);
-  ob.observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
-  setInterval(label,1000);
+  document.addEventListener('fullscreenchange',sync);
+
+  // The existing Plyr corner fullscreen control becomes the user's minimize
+  // control while the real Android fullscreen surface is active.
+  function corner(e){
+    const btn=e.target?.closest?.('.plyr__control[data-plyr="fullscreen"]');
+    if(!btn) return;
+    const v=document.getElementById('watch-view');
+    if(!v) return;
+    const active=!!document.fullscreenElement || v.classList.contains('anexus-web-fullscreen') || document.body.classList.contains('anexus-player-fullscreen');
+    if(!active) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+    try{ minimizePlayerToOptions(); }catch(_){ try{ backToAnimeLanding(); }catch(__){} }
+  }
+  document.addEventListener('pointerdown',corner,true);
+  document.addEventListener('click',corner,true);
+  document.addEventListener('touchend',corner,true);
 })();
 </script>
 </body>
@@ -7068,27 +7153,6 @@ body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
 #hero .hero-bg{inset:0 !important;transform:none !important;filter:none !important;background-repeat:no-repeat !important;background-position:center top !important;background-size:100% auto !important;background-color:#000 !important;}
 #hero .hero-right{display:none !important;}
 </style>
-
-<style id="anexus-corner-minimize-label">
-body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
-  content:none!important;
-}
-</style>
-<script id="anexus-corner-minimize-final">
-(function(){
-  function label(){
-    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(function(btn){
-      const fs=document.body.classList.contains('anexus-player-fullscreen');
-      btn.setAttribute('aria-label',fs?'Minimize player':'Fullscreen player');
-      btn.setAttribute('title',fs?'Minimize player':'Fullscreen player');
-    });
-  }
-  label();
-  const ob=new MutationObserver(label);
-  ob.observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
-  setInterval(label,1000);
-})();
-</script>
 </body>
 
 <style id="anexus-opening-hero-exact-detail-style">
@@ -7387,27 +7451,6 @@ body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:
 #hero .hero-bg{inset:0 !important;transform:none !important;filter:none !important;background-repeat:no-repeat !important;background-position:center top !important;background-size:100% auto !important;background-color:#000 !important;}
 #hero .hero-right{display:none !important;}
 </style>
-
-<style id="anexus-corner-minimize-label">
-body.anexus-player-fullscreen .plyr__control[data-plyr="fullscreen"]::after{
-  content:none!important;
-}
-</style>
-<script id="anexus-corner-minimize-final">
-(function(){
-  function label(){
-    document.querySelectorAll('.plyr__control[data-plyr="fullscreen"]').forEach(function(btn){
-      const fs=document.body.classList.contains('anexus-player-fullscreen');
-      btn.setAttribute('aria-label',fs?'Minimize player':'Fullscreen player');
-      btn.setAttribute('title',fs?'Minimize player':'Fullscreen player');
-    });
-  }
-  label();
-  const ob=new MutationObserver(label);
-  ob.observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
-  setInterval(label,1000);
-})();
-</script>
 </body>
 
 <style id="anexus-normal-catalog-banner-ULTIMATE">
@@ -7583,18 +7626,8 @@ html,body,#home-view,#search-view,#watch-view,.view{width:100%!important;max-wid
       e.stopImmediatePropagation?.();
       suppressFullscreenClickUntil=performance.now()+700;
       try{
-        const inAnimeNexusFullscreen =
-          document.body.classList.contains('anexus-player-fullscreen') ||
-          document.documentElement.classList.contains('anexus-player-fullscreen') ||
-          player.elements?.container?.classList.contains('anexus-web-fullscreen');
-
-        // In the AnimeNexus fullscreen player, the corner button is the
-        // player's MINIMIZE control: leave playback and return to the
-        // current anime-specific hero/detail page. Do not merely exit
-        // fullscreen and leave the watch page underneath it.
-        if(inAnimeNexusFullscreen){
-          try{ minimizePlayerToOptions(); }
-          catch(_){ try{ backToAnimeLanding(); }catch(__){} }
+        if(player.elements?.container?.classList.contains('anexus-web-fullscreen')){
+          exitAnexusWebFullscreen(player);
         }else{
           enterAnexusWebFullscreen(player);
         }
