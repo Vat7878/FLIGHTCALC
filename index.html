@@ -4797,7 +4797,7 @@ function renderLandingEpisodes(){
     const b=document.createElement('button');
     b.className=`landing-ep ${watched.includes(i)?'watched':''} ${i===state.totalEps?'latest':''}`;
     b.textContent=`EP ${i}`;
-    b.onclick=()=>showEpisodePlayer(i,{autoFullscreen:true});
+    b.onclick=()=>{ requestAndroidFullscreenFromTap(); showEpisodePlayer(i,{autoFullscreen:true}); };
     list.appendChild(b);
   }
 }
@@ -4889,18 +4889,31 @@ function showAnimeLanding(){
   window.scrollTo(0,0);
 }
 function requestAndroidWebFullscreenFromGesture(target){
-  // Android: use the browser's real Fullscreen API on the existing AnimeNexus
-  // watch surface, while keeping the same Plyr/web player underneath. This is
-  // called synchronously from the episode click so Chrome/WebView can accept
-  // the fullscreen request as a user gesture. iOS/iPadOS keeps the existing
-  // AnimeNexus fullscreen behavior untouched.
+  // Android: request REAL browser fullscreen while we still have the original
+  // tap's transient user activation. Do this on the document element first so
+  // it works even when the watch/player view is created asynchronously. The
+  // AnimeNexus/Plyr player remains the visible surface inside that fullscreen
+  // document. iPhone/iPad keeps the existing behavior.
   const isAndroid=/Android/i.test(navigator.userAgent||'');
-  if(!isAndroid || !target || typeof target.requestFullscreen!=='function') return false;
-  try{
-    const p=target.requestFullscreen({navigationUI:'hide'});
-    if(p && typeof p.catch==='function') p.catch(()=>{});
-    return true;
-  }catch(_){ return false; }
+  if(!isAndroid) return false;
+  const candidates=[];
+  const root=document.documentElement;
+  if(root && typeof root.requestFullscreen==='function') candidates.push(root);
+  if(target && typeof target.requestFullscreen==='function' && target!==root) candidates.push(target);
+  for(const el of candidates){
+    try{
+      const p=el.requestFullscreen({navigationUI:'hide'});
+      if(p && typeof p.catch==='function') p.catch(()=>{});
+      return true;
+    }catch(_){}
+  }
+  return false;
+}
+
+function requestAndroidFullscreenFromTap(){
+  if(!/Android/i.test(navigator.userAgent||'')) return;
+  if(document.fullscreenElement) return;
+  requestAndroidWebFullscreenFromGesture(document.documentElement);
 }
 
 function exitAndroidBrowserFullscreen(){
@@ -4988,7 +5001,7 @@ function renderEpisodeList(){
     const box=document.createElement('div');
     box.className=`ep-box ${watched.includes(i)?'watched':''}`;
     box.dataset.ep=i;
-    box.onclick=()=>showEpisodePlayer(i);
+    box.onclick=()=>{ requestAndroidFullscreenFromTap(); showEpisodePlayer(i); };
     if(episodeViewMode==='list') box.innerHTML=`<img class="ep-list-thumb" src="${cover}" alt="" loading="lazy"><div class="ep-list-info"><div class="ep-list-name">Episode ${i}</div><div class="ep-list-sub">${watched.includes(i)?'Watched':'Watch episode'}${i===state.totalEps?' • Latest available':''}</div></div>`;
     else box.textContent=i;
     grid.appendChild(box);
@@ -4998,6 +5011,10 @@ function renderEpisodeList(){
 }
 
 function startAnimeDirect(id, ep=1){
+  // Preserve the tap's user activation before openWatchView() performs its
+  // asynchronous catalog request. This is what lets Android enter fullscreen
+  // on the FIRST tap instead of leaving Chrome's address/navigation bars visible.
+  requestAndroidFullscreenFromTap();
   pendingWatchIntent={
     mode:'direct',
     aid:id,
@@ -7091,6 +7108,17 @@ KageWatchAnalytics.init();
 #watch-view:fullscreen .plyr__video-wrapper,
 #watch-view:-webkit-full-screen .plyr__video-wrapper{height:100%!important;}
 </style>
+<script id="anexus-android-fullscreen-gesture-bridge">
+(function(){
+  'use strict';
+  if(!/Android/i.test(navigator.userAgent||'')) return;
+  document.addEventListener('pointerdown',function(e){
+    const t=e.target?.closest?.('.ep-box,.landing-ep,.btn-watch,.history-card,.continue-card');
+    if(!t || document.fullscreenElement) return;
+    try{ requestAndroidFullscreenFromGesture(document.documentElement); }catch(_){}
+  },{capture:true,passive:true});
+})();
+</script>
 <script id="anexus-android-real-fullscreen-final-script">
 (function(){
   'use strict';
