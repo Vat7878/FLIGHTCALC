@@ -1453,15 +1453,85 @@ video {
 <meta name="mobile-web-app-capable" content="yes">
 
 <style id="hero-fit-fix">
-  /* Keep the homepage artwork at its natural cover scale: no artificial zoom/pan. */
-  #hero .hero-bg{inset:0 !important;transform:none !important;filter:brightness(.4) !important;background-position:center center !important;background-size:cover !important;}
-  @media (max-width: 600px){
-    #hero{height:72svh;min-height:500px;max-height:680px;}
-    #hero .hero-bg{background-position:center center !important;}
-    #hero .hero-content{align-items:flex-end;text-align:left;padding:0 18px max(24px,env(safe-area-inset-bottom));}
+  /* Homepage Spotlight: show the actual banner without any artificial zoom/crop. */
+  #hero{
+    position:relative !important;
+    overflow:hidden !important;
+    background:#000 !important;
+  }
+  #hero .hero-bg{
+    inset:0 !important;
+    transform:none !important;
+    filter:none !important;
+    background-repeat:no-repeat !important;
+    background-position:center top !important;
+    background-size:100% auto !important;
+    background-color:#000 !important;
+  }
+  /* The content is allowed to sit in the natural black fade below the complete artwork. */
+  #hero .hero-grad{
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 38%, rgba(0,0,0,.16) 48%, rgba(0,0,0,.62) 66%, rgba(0,0,0,.94) 82%, #000 100%),
+      linear-gradient(to right, rgba(0,0,0,.08) 0%, rgba(0,0,0,.03) 65%, rgba(0,0,0,.12) 100%) !important;
+  }
+  @media (max-width:600px){
+    /* Mobile: the banner is fitted to the full device width, so its complete image remains visible. */
+    #hero{
+      height:clamp(690px, 92svh, 820px) !important;
+      min-height:690px !important;
+      max-height:820px !important;
+    }
+    #hero .hero-bg{
+      background-size:100% auto !important;
+      background-position:center top !important;
+    }
+    #hero .hero-content{
+      align-items:flex-end !important;
+      justify-content:flex-end !important;
+      text-align:left !important;
+      padding:0 18px max(26px, env(safe-area-inset-bottom)) !important;
+      min-height:100% !important;
+    }
+    #hero .hero-left{
+      width:100% !important;
+      max-width:none !important;
+    }
+    #hero .hero-title{
+      max-width:92vw !important;
+    }
   }
   @media (min-width:601px) and (max-width:1024px){
-    #hero{height:70svh;min-height:520px;max-height:700px;}
+    /* iPad: fit the complete banner to the available width as well. */
+    #hero{height:clamp(620px,78svh,760px) !important;}
+    #hero .hero-bg{
+      background-size:100% auto !important;
+      background-position:center top !important;
+    }
+    #hero .hero-content{align-items:flex-end !important;text-align:left !important;padding-bottom:42px !important;}
+  }
+</style>
+<style id="anexus-playback-preferences">
+  #main-nav{flex:1;min-width:0}
+  .header-settings-icon{cursor:pointer}
+  .playback-modal{position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .playback-modal.active{display:flex}
+  .playback-modal-card{width:min(420px,calc(100vw - 32px));background:var(--card,#111120);border:1px solid var(--border2,rgba(255,255,255,.13));border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.65);overflow:hidden;color:var(--text,#ededf8)}
+  .playback-modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border,rgba(255,255,255,.07));font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:.7px}
+  .playback-close{width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.07);color:#fff;font-size:1.45rem;line-height:1;cursor:pointer}
+  .playback-modal-body{padding:20px}
+  .playback-modal-label{font-size:.82rem;color:var(--muted2,#8888aa);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700}
+  .playback-choice-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .playback-choice{height:48px;border-radius:10px;border:1px solid var(--border2,rgba(255,255,255,.13));background:var(--card2,#181828);color:var(--muted2,#aaa);font-weight:800;cursor:pointer}
+  .playback-choice.active{background:var(--accent,#e63950);border-color:var(--accent,#e63950);color:#fff}
+  .playback-modal-note{margin:14px 0 0;color:var(--muted2,#aaa);font-size:.82rem;line-height:1.55}
+  .playback-alert-card{position:relative;padding:28px 22px 22px;text-align:center}
+  .playback-alert-close{position:absolute;top:12px;right:12px}
+  .playback-alert-icon{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:rgba(100,149,237,.16);color:#6495ed;font-weight:900;margin-bottom:12px}
+  .playback-alert-title{font-size:1.25rem;font-weight:800}
+  .playback-confirm{margin-top:18px;width:100%;height:46px;border:0;border-radius:10px;background:var(--accent,#e63950);color:#fff;font-weight:800;cursor:pointer}
+  @media(max-width:700px){
+    #main-nav{display:block;flex:1}
+    .header-settings-icon,.header-home-icon,.icon-btn{flex-shrink:0}
   }
 </style>
 </head>
@@ -1496,9 +1566,8 @@ video {
   <h1 class="sr-only">Watch Anime Online Free - Sub &amp; Dub Anime Streaming on AnimeNexus</h1>
   
   <a href="index.html" class="logo" onclick="event.preventDefault(); goHome();">AnimeNexus</a>
-  <nav id="main-nav">
-    <a class="header-home-btn active" href="index.html" onclick="event.preventDefault(); goHome();">Home</a>
-    <div class="nav-indicator" id="nav-indicator"></div>
+  <nav id="main-nav" aria-label="Primary navigation">
+    <div class="nav-indicator" id="nav-indicator" style="display:none"></div>
   </nav>
   <div class="header-right">
     <div class="lang-toggle [object Object]" id="title-toggle" onclick="toggleTitleLang()">
@@ -1531,6 +1600,12 @@ video {
     <a href="watchlist.html" class="icon-btn" title="Watchlist" onclick="event.preventDefault(); loadWatchlist();" id="nav-watchlist">
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
     </a>
+    <button type="button" class="icon-btn header-settings-icon" title="Playback settings" aria-label="Playback settings" onclick="openPlaybackSettings()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"></path>
+        <path d="m19.4 15 .1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.8 1.8 0 0 0-3.1 1.3v.2a2 2 0 0 1-4 0v-.2a1.8 1.8 0 0 0-3.1-1.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.8 1.8 0 0 0 2.3 12a1.8 1.8 0 0 0-1.3-3.1h-.2a2 2 0 0 1 0-4H1a1.8 1.8 0 0 0 1.3-3.1l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.8 1.8 0 0 0 8.2 0a1.8 1.8 0 0 0 3.1-1.3v-.2a2 2 0 0 1 4 0v.2a1.8 1.8 0 0 0 3.1 1.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.8 1.8 0 0 0 22 8.2a1.8 1.8 0 0 0 1.3 3.1h.2a2 2 0 0 1 0 4h-.2a1.8 1.8 0 0 0-1.3 3.1l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1A1.8 1.8 0 0 0 15.8 20a1.8 1.8 0 0 0-3.1 1.3v.2a2 2 0 0 1-4 0v-.2A1.8 1.8 0 0 0 5.6 20l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.8 1.8 0 0 0 2 14.1H1.8a2 2 0 0 1 0-4H2A1.8 1.8 0 0 0 3.3 7l-.1-.1A2 2 0 1 1 6 4.1l.1.1A1.8 1.8 0 0 0 9.2 3v-.2a2 2 0 0 1 4 0V3a1.8 1.8 0 0 0 3.1 1.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.8 1.8 0 0 0 20.4 10h.2a2 2 0 0 1 0 4h-.2a1.8 1.8 0 0 0-1 1Z"></path>
+      </svg>
+    </button>
     <a href="index.html" class="icon-btn header-home-icon" title="Home" aria-label="Home" onclick="event.preventDefault(); goHome();">
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 10.2V21h6v-6h6v6h6V10.2L12 3z"></path></svg>
     </a>
@@ -1538,6 +1613,32 @@ video {
 </header>
 
 <div id="toast"></div>
+<div id="playback-settings-modal" class="playback-modal" aria-hidden="true">
+  <div class="playback-modal-card" role="dialog" aria-modal="true" aria-labelledby="playback-settings-title">
+    <div class="playback-modal-head">
+      <div id="playback-settings-title">Playback Settings</div>
+      <button type="button" class="playback-close" aria-label="Close settings" onclick="closePlaybackSettings()">×</button>
+    </div>
+    <div class="playback-modal-body">
+      <div class="playback-modal-label">Default language</div>
+      <div class="playback-choice-row">
+        <button type="button" id="default-sub-choice" class="playback-choice" onclick="setDefaultLang('sub')">SUB</button>
+        <button type="button" id="default-dub-choice" class="playback-choice" onclick="setDefaultLang('dub')">DUB</button>
+      </div>
+      <p class="playback-modal-note">This becomes your default for new anime. If DUB is unavailable for an episode, AnimeNexus will ask before continuing with SUB.</p>
+    </div>
+  </div>
+</div>
+
+<div id="dub-fallback-modal" class="playback-modal" aria-hidden="true">
+  <div class="playback-modal-card playback-alert-card" role="alertdialog" aria-modal="true" aria-labelledby="dub-fallback-title">
+    <button type="button" class="playback-close playback-alert-close" aria-label="Close" onclick="closeDubFallback()">×</button>
+    <div class="playback-alert-icon">SUB</div>
+    <div id="dub-fallback-title" class="playback-alert-title">Dub isn't available</div>
+    <p id="dub-fallback-text" class="playback-modal-note">There isn't a dub option for this episode, so AnimeNexus will continue with SUB.</p>
+    <button type="button" class="playback-confirm" onclick="continueWithSub()">Continue with SUB</button>
+  </div>
+</div>
 
 <div id="home-view" class="view active">
   <div id="hero">
@@ -3647,7 +3748,68 @@ const PROVIDERS = {
 };
 
 // Default provider set to AnimeNexus
-let state = { anilistId:null, malId:null, currentEp:null, provider:'kagewatch', lang:'sub', totalEps:0, animeTitle:'', animeCover:'', animeBanner:'', animeObj:null };
+let state = { anilistId:null, malId:null, currentEp:null, provider:'AnimeNexus', lang:'sub', totalEps:0, animeTitle:'', animeCover:'', animeBanner:'', animeObj:null };
+let pendingWatchIntent = null;
+let pendingResumeTime = null;
+let pendingAutoFullscreen = false;
+let dubFallbackPending = false;
+let playbackSaveTimer = null;
+
+function getDefaultLang(){ return localStorage.getItem('anexus_default_lang') === 'dub' ? 'dub' : 'sub'; }
+function getDefaultProvider(){ return localStorage.getItem('anexus_default_provider') || 'AnimeNexus'; }
+function savePlaybackProgress(){
+  if(!state.malId || !state.currentEp || !window.activePlyrInstance) return;
+  const p=window.activePlyrInstance;
+  const h=Store.get('otaku_hist');
+  const old=h[state.malId]||{};
+  const pos=Number.isFinite(p.currentTime)?p.currentTime:0;
+  h[state.malId]={...old, malId:state.malId, aid:state.anilistId, title:state.animeTitle, cover:state.animeCover, banner:(String(state.anilistId)==='21'?ONE_PIECE_CUSTOM_COVER:(state.animeBanner||state.animeCover)), ep:state.currentEp, total:state.totalEps, eps:old.eps||[], lang:state.lang, provider:state.provider, position:pos, remainingTime:pos>0?`${Math.floor(pos/60)}:${String(Math.floor(pos%60)).padStart(2,'0')}`:'' , ts:Date.now()};
+  Store.set('otaku_hist',h);
+  renderHistory();
+}
+function schedulePlaybackSave(){ clearTimeout(playbackSaveTimer); playbackSaveTimer=setTimeout(savePlaybackProgress,1200); }
+
+function openPlaybackSettings(){
+  const m=document.getElementById('playback-settings-modal'); if(!m)return;
+  document.getElementById('default-sub-choice')?.classList.toggle('active',getDefaultLang()==='sub');
+  document.getElementById('default-dub-choice')?.classList.toggle('active',getDefaultLang()==='dub');
+  m.classList.add('active'); m.setAttribute('aria-hidden','false');
+}
+function closePlaybackSettings(){
+  const m=document.getElementById('playback-settings-modal'); if(!m)return;
+  m.classList.remove('active'); m.setAttribute('aria-hidden','true');
+}
+function setDefaultLang(lang){
+  localStorage.setItem('anexus_default_lang',lang==='dub'?'dub':'sub');
+  document.getElementById('default-sub-choice')?.classList.toggle('active',lang==='sub');
+  document.getElementById('default-dub-choice')?.classList.toggle('active',lang==='dub');
+}
+function openDubFallback(){
+  const m=document.getElementById('dub-fallback-modal'); if(!m)return;
+  m.classList.add('active'); m.setAttribute('aria-hidden','false');
+}
+function closeDubFallback(){
+  const m=document.getElementById('dub-fallback-modal'); if(!m)return;
+  m.classList.remove('active'); m.setAttribute('aria-hidden','true'); dubFallbackPending=false;
+}
+function continueWithSub(){
+  closeDubFallback();
+  state.lang='sub';
+  document.getElementById('lang-sub')?.classList.add('active');
+  document.getElementById('lang-dub')?.classList.remove('active');
+  if(state.currentEp) playEp(state.currentEp,{autoFullscreen:pendingAutoFullscreen,resumeTime:pendingResumeTime});
+}
+function maybeEnterFullscreen(player){
+  if(!pendingAutoFullscreen || !player) return;
+  pendingAutoFullscreen=false;
+  setTimeout(()=>{
+    try{
+      if(player.media && typeof player.media.webkitEnterFullscreen==='function' && /iPhone|iPad|iPod/i.test(navigator.userAgent)){ player.media.webkitEnterFullscreen(); return; }
+      if(player.fullscreen?.enter) { const r=player.fullscreen.enter(); if(r?.catch) r.catch(()=>{}); }
+    }catch(_){ }
+  },80);
+}
+
 let heroAnimes = [], heroIdx = 0, heroTimer = null;
 
 // Global AutoNext Timer State
@@ -4452,6 +4614,7 @@ function renderHistory(){
 
     el.addEventListener('click', (e) => {
       e.preventDefault();
+      pendingWatchIntent = {mode:'continue', aid:item.aid, ep:parseInt(item.ep)||1, lang:item.lang||getDefaultLang(), provider:item.provider||getDefaultProvider(), position:Number(item.position)||0};
       openWatchView(item.aid);
     });
 
@@ -4579,7 +4742,7 @@ function renderLandingEpisodes(){
     const b=document.createElement('button');
     b.className=`landing-ep ${watched.includes(i)?'watched':''} ${i===state.totalEps?'latest':''}`;
     b.textContent=`EP ${i}`;
-    b.onclick=()=>showEpisodePlayer(i);
+    b.onclick=()=>showEpisodePlayer(i,{autoFullscreen:true});
     list.appendChild(b);
   }
 }
@@ -4630,7 +4793,18 @@ function renderAnimeLanding(){
     const label=latest ? `Continue Watching E${latest}` : `Start Watching E${firstEpisode}`;
     const labelEl=watchBtn.querySelector('span:last-child');
     if(labelEl) labelEl.textContent=label;
-    watchBtn.onclick=()=>showEpisodePlayer(latest || firstEpisode);
+    watchBtn.onclick=()=>{
+      const hist=Store.get('otaku_hist')[state.malId]||{};
+      if(latest){
+        state.lang=hist.lang||getDefaultLang();
+        state.provider=hist.provider||getDefaultProvider();
+        document.getElementById('lang-sub')?.classList.toggle('active',state.lang==='sub');
+        document.getElementById('lang-dub')?.classList.toggle('active',state.lang==='dub');
+        showEpisodePlayer(latest,{autoFullscreen:true,resumeTime:Math.max(0,(Number(hist.position)||0)-5)});
+      } else {
+        showEpisodePlayer(firstEpisode,{autoFullscreen:true,resumeTime:0});
+      }
+    };
   }
 
   const bookmark=document.getElementById('landing-bookmark');
@@ -4659,13 +4833,15 @@ function showAnimeLanding(){
   renderAnimeLanding();
   window.scrollTo(0,0);
 }
-function showEpisodePlayer(ep){
+function showEpisodePlayer(ep,opts={}){
   if(!ep||ep<1||ep>state.totalEps)return;
   const view=document.getElementById('watch-view');
   if(!view)return;
   view.classList.add('player-mode');
   window.scrollTo(0,0);
-  playEp(ep);
+  pendingResumeTime=Number(opts.resumeTime)||null;
+  pendingAutoFullscreen=opts.autoFullscreen!==false;
+  playEp(ep,{resumeTime:pendingResumeTime,autoFullscreen:pendingAutoFullscreen});
 }
 function backToAnimeLanding(){
   const view=document.getElementById('watch-view');
@@ -4714,7 +4890,7 @@ async function openWatchView(id) {
   }}`, {id});
   
   const m = d.Media;
-  state = { anilistId:m.id, malId:m.idMal, currentEp:null, provider:'AnimeNexus', lang:'sub', totalEps: m.episodes || (m.nextAiringEpisode ? m.nextAiringEpisode.episode - 1 : 12), animeTitle: getTitle(m.title), animeCover: getAnimeCover(m), animeBanner: getAnimeBanner(m), animeObj: m };
+  state = { anilistId:m.id, malId:m.idMal, currentEp:null, provider:getDefaultProvider(), lang:getDefaultLang(), totalEps: m.episodes || (m.nextAiringEpisode ? m.nextAiringEpisode.episode - 1 : 12), animeTitle: getTitle(m.title), animeCover: getAnimeCover(m), animeBanner: getAnimeBanner(m), animeObj: m };
   
   // 🚀 URL ROUTING: Update the URL with the proper SEO title
   const urlTitle = getTitle(m.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -4753,8 +4929,8 @@ async function openWatchView(id) {
     btn.onclick=()=> { 
       document.querySelectorAll('#server-wrap .server-btn').forEach(b=>b.classList.remove('active')); 
       btn.classList.add('active'); 
-      state.provider=k; 
-      if(state.currentEp) playEp(state.currentEp); 
+      state.provider=k; localStorage.setItem('anexus_default_provider',k);
+      if(state.currentEp) playEp(state.currentEp,{autoFullscreen:false}); 
     };
     srv.appendChild(btn);
   });
@@ -4826,6 +5002,17 @@ async function openWatchView(id) {
 
   renderEpisodeList();
   showAnimeLanding();
+
+  if(pendingWatchIntent && Number(pendingWatchIntent.aid)===Number(id)) {
+    const intent=pendingWatchIntent;
+    pendingWatchIntent=null;
+    state.lang=intent.lang||getDefaultLang();
+    state.provider=intent.provider||getDefaultProvider();
+    document.getElementById('lang-sub')?.classList.toggle('active',state.lang==='sub');
+    document.getElementById('lang-dub')?.classList.toggle('active',state.lang==='dub');
+    document.querySelectorAll('#server-wrap .server-btn').forEach(b=>b.classList.toggle('active',b.textContent===PROVIDERS[state.provider]?.name));
+    setTimeout(()=>showEpisodePlayer(intent.ep,{autoFullscreen:true,resumeTime:Math.max(0,(Number(intent.position)||0)-5)}),0);
+  }
 }
 
 window.activeHlsInstance = null;
@@ -4851,12 +5038,16 @@ function destroyActivePlayer() {
 }
 
 // 🚀 NATIVE AnimeNexus VIP PLAYER FUNCTION
-async function playEp(ep) {
+async function playEp(ep, options={}) {
   clearInterval(window.autoNextInterval);
   destroyActivePlayer();
   ep = parseInt(ep); 
   if(ep < 1 || ep > state.totalEps) return;
   state.currentEp = ep;
+  if(options.resumeTime!=null) pendingResumeTime=Number(options.resumeTime)||0;
+  if(options.autoFullscreen!=null) pendingAutoFullscreen=!!options.autoFullscreen;
+  if(state.lang!=='sub' && state.lang!=='dub') state.lang=getDefaultLang();
+  if(!PROVIDERS[state.provider]) state.provider=getDefaultProvider();
   if (window.isPartyHost) {
       broadcastToParty({
           type: 'SYNC',
@@ -4894,6 +5085,11 @@ async function playEp(ep) {
           
           const streamData = state.lang === 'dub' ? data.sdub : data.ssub;
           if (!streamData || !streamData.streams || streamData.streams.length === 0) {
+              if(state.lang==='dub') {
+                dubFallbackPending=true;
+                openDubFallback();
+                return;
+              }
               throw new Error(`${state.lang.toUpperCase()} not found for this episode`);
           }
           
@@ -5084,14 +5280,27 @@ async function playEp(ep) {
       playerWrap.innerHTML = `<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen style="width:100%;height:100%;border:none;"></iframe>`;
   }
   
-  const h=Store.get('otaku_hist'); const eps=h[state.malId]?.eps||[]; if(!eps.includes(ep)) eps.push(ep);
-  Store.addHist(state.malId,{malId:state.malId, aid:state.anilistId, title:state.animeTitle, cover:state.animeCover, banner: (String(state.anilistId) === '21' ? ONE_PIECE_CUSTOM_COVER : (state.animeBanner || state.animeCover)), ep, total:state.totalEps, eps});
+  const h=Store.get('otaku_hist'); const oldHist=h[state.malId]||{}; const eps=oldHist.eps||[]; if(!eps.includes(ep)) eps.push(ep);
+  const sameEpisode = Number(oldHist.ep) === Number(ep);
+  const savedPosition = options.resumeTime!=null ? Number(options.resumeTime)||0 : (sameEpisode ? Number(oldHist.position)||0 : 0);
+  Store.addHist(state.malId,{malId:state.malId, aid:state.anilistId, title:state.animeTitle, cover:state.animeCover, banner: (String(state.anilistId) === '21' ? ONE_PIECE_CUSTOM_COVER : (state.animeBanner || state.animeCover)), ep, total:state.totalEps, eps, lang:state.lang, provider:state.provider, position:savedPosition, remainingTime:savedPosition>0?`${Math.floor(savedPosition/60)}:${String(Math.floor(savedPosition%60)).padStart(2,'0')}`:''});
   syncToAniList(state.anilistId, ep);
   syncToMAL(state.malId, ep);
 }
 
 function setupPlayerLogic(player, skipBtn, skipTimes, ep) {
     let currentSkip = null;
+    let resumeApplied = false;
+    const resumeAt = pendingResumeTime;
+    const applyResume = () => {
+        if(resumeApplied || resumeAt==null || !player || !Number.isFinite(player.duration) || player.duration<=0) return;
+        resumeApplied = true;
+        player.currentTime = Math.max(0, Math.min(player.duration-0.25, Number(resumeAt)||0));
+        pendingResumeTime = null;
+    };
+    player.on('loadedmetadata', applyResume);
+    player.on('durationchange', applyResume);
+    maybeEnterFullscreen(player);
     let nextEpisodePrefetched = false;
     const nextBtn = document.getElementById('auto-next-btn');
     const anbText = document.getElementById('anb-text');
@@ -5112,6 +5321,7 @@ function setupPlayerLogic(player, skipBtn, skipTimes, ep) {
     player.on('timeupdate', () => {
         const t = player.currentTime;
         const d = player.duration;
+        if(Number.isFinite(t) && t>0) schedulePlaybackSave();
         
         currentSkip = skipTimes.find(s => t >= s.interval.startTime && t <= s.interval.endTime);
         if (currentSkip) {
@@ -5219,6 +5429,7 @@ function navEp(dir) {
 
 function setLang(l) {
   state.lang = l;
+  localStorage.setItem('anexus_default_lang',l==='dub'?'dub':'sub');
   document.getElementById('lang-sub').classList.toggle('active', l==='sub');
   document.getElementById('lang-dub').classList.toggle('active', l==='dub');
   if(state.currentEp) playEp(state.currentEp);
@@ -6639,6 +6850,20 @@ KageWatchAnalytics.init();
 })();
 </script>
 
+<script id="anexus-playback-preference-events">
+(function(){
+  document.addEventListener('click',function(e){
+    const a=e.target.closest('.playback-modal');
+    if(a && e.target===a){ if(a.id==='playback-settings-modal') closePlaybackSettings(); else if(a.id==='dub-fallback-modal') closeDubFallback(); }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      closePlaybackSettings();
+      if(document.getElementById('dub-fallback-modal')?.classList.contains('active')) closeDubFallback();
+    }
+  });
+})();
+</script>
 </body>
 </html></body>
 
