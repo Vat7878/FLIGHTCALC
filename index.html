@@ -1599,6 +1599,22 @@ body.anexus-player-fullscreen{overflow:hidden!important;touch-action:none!import
 .anexus-episodes-btn:hover,.anexus-minimize-btn:hover{background:rgba(255,255,255,.12);}
 @media(max-width:700px){.anexus-player-menu .anexus-menu-panel{right:10px;bottom:56px;width:min(300px,calc(100% - 20px));}}
 </style>
+<style id="anexus-final-home-hero-catalog-banner">
+/* FINAL: homepage Spotlight uses the same normal Trending/catalog bannerImage data. */
+#hero .hero-bg{
+  inset:0 !important;
+  transform:none !important;
+  filter:none !important;
+  background-repeat:no-repeat !important;
+  background-position:center top !important;
+  background-size:100% auto !important;
+  background-color:#000 !important;
+}
+#hero .hero-slide{transform:none !important;}
+#hero .hero-right{display:none !important;}
+@media(max-width:600px){#hero .hero-bg{background-size:100% auto !important;background-position:center top !important;}}
+@media(min-width:601px) and (max-width:1024px){#hero .hero-bg{background-size:100% auto !important;background-position:center top !important;}}
+</style>
 </head>
 <body>
 <div id="anexus-startup" aria-label="Loading AnimeNexus"><div class="anexus-startup-logo">AnimeNexus</div></div>
@@ -4514,7 +4530,7 @@ function buildHero(list){
   cont.innerHTML = ''; dotsEl.innerHTML = '';
   
   if (list.length > 0) {
-    const firstBanner = list[0]?.bannerImage || list[0]?.coverImage?.extraLarge || list[0]?.coverImage?.large || '';
+    const firstBanner = list[0]?.heroBanner || list[0]?.bannerImage || list[0]?.coverImage?.extraLarge || list[0]?.coverImage?.large || '';
     const firstCover = list[0].coverImage.extraLarge || list[0].coverImage.extraLarge;
     
     if (firstBanner) {
@@ -4537,7 +4553,7 @@ function buildHero(list){
     const slide=document.createElement('div');
     slide.className='hero-slide'+(i===0?' active':'');
     
-    const bannerUrl = a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '';
+    const bannerUrl = a?.heroBanner || a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '';
     const coverUrl = a.coverImage.extraLarge || a.coverImage.extraLarge;
     
     slide.innerHTML=`
@@ -4867,7 +4883,18 @@ function showEpisodePlayer(ep,opts={}){
   pendingAutoFullscreen=opts.autoFullscreen!==false;
   playEp(ep,{resumeTime:pendingResumeTime,autoFullscreen:pendingAutoFullscreen});
 }
-function minimizePlayerToOptions(){ backToAnimeLanding(); }
+function minimizePlayerToOptions(){
+  // Minimize is a real exit from the player, not a cosmetic toggle.
+  try { exitAnexusWebFullscreen(window.activePlyrInstance || window.player); } catch(_) {}
+  document.body.classList.remove('anexus-player-fullscreen');
+  const view=document.getElementById('watch-view');
+  if(view) view.classList.remove('player-mode','anexus-direct-player','player-options-mode');
+  try { destroyActivePlayer(); } catch(_) {}
+  const wrap=document.getElementById('player-wrap');
+  if(wrap) wrap.innerHTML='';
+  renderAnimeLanding();
+  window.scrollTo({top:0,left:0,behavior:'instant'});
+}
 function backToAnimeLanding(){
   const view=document.getElementById('watch-view');
   if(!view) return;
@@ -5134,19 +5161,24 @@ async function playEp(ep, options={}) {
           let requestedLang = state.lang === 'dub' ? 'dub' : 'sub';
           let streamData = requestedLang === 'dub' ? data?.sdub : data?.ssub;
 
-          // Respect the user's selected language first. Only fall back when the
-          // requested language genuinely has no streams for this episode.
+          // If the saved/default language is unavailable, silently switch to the
+          // language that actually has a stream. NEVER switch the server/provider.
           if (!streamData || !Array.isArray(streamData.streams) || streamData.streams.length === 0) {
+              if (options._languageFallbackTried) {
+                throw new Error(`${requestedLang.toUpperCase()} is unavailable and no alternate language stream was returned.`);
+              }
               const fallbackLang = requestedLang === 'dub' ? 'sub' : 'dub';
               const fallbackData = fallbackLang === 'dub' ? data?.sdub : data?.ssub;
               if (fallbackData && Array.isArray(fallbackData.streams) && fallbackData.streams.length) {
-                dubFallbackPending = requestedLang === 'dub';
-                window.anexusFallbackFromLang = requestedLang;
-                window.anexusFallbackToLang = fallbackLang;
-                openDubFallback(requestedLang, fallbackLang);
-                return;
+                state.lang = fallbackLang;
+                document.getElementById('lang-sub')?.classList.toggle('active', state.lang === 'sub');
+                document.getElementById('lang-dub')?.classList.toggle('active', state.lang === 'dub');
+                localStorage.setItem('anexus_default_lang', fallbackLang);
+                // Retry the SAME episode with the SAME provider/server selection.
+                // Keep the saved playback position and fullscreen intent.
+                return playEp(ep, {...options, resumeTime: options.resumeTime != null ? options.resumeTime : pendingResumeTime, _languageFallbackTried:true});
               }
-              throw new Error(`${requestedLang.toUpperCase()} not found for this episode`);
+              throw new Error(`Neither SUB nor DUB is available for Episode ${ep}.`);
           }
           
           const stream = streamData.streams.find(s => s.server === 'VidPlay-1' && s.type === 'hls')
@@ -5325,7 +5357,7 @@ async function playEp(ep, options={}) {
           }
 
       }).catch(err => {
-          playerWrap.innerHTML = `<div class="player-loading">❌ ${err.message}. Try switching Server.</div>`;
+          playerWrap.innerHTML = `<div class="player-loading">❌ ${err.message}</div>`;
       });
 
   } 
@@ -5373,7 +5405,8 @@ function injectPlayerMenu(player){
     menu.classList.remove('open');
     backToAnimeLanding();
   });
-  menu.querySelector('[data-minimize]').addEventListener('click',()=>{
+  menu.querySelector('[data-minimize]').addEventListener('click',(e)=>{
+    e.preventDefault(); e.stopPropagation();
     menu.classList.remove('open');
     minimizePlayerToOptions();
   });
@@ -5854,7 +5887,7 @@ function scrollDates(dir) {
   const tList=trending?.Page?.media||[];
   // Keep the homepage Spotlight driven by the normal trending rotation.
   // One Piece is prioritized only in the Upcoming/Schedule catalog row below.
-  const heroList = tList.slice(0,5);
+  const heroList = tList.slice(0,5).map(a => ({...a, heroBanner: a.bannerImage || a.coverImage?.extraLarge || a.coverImage?.large || ''}));
   buildHero(heroList);
   fillStrip('strip-trending', tList);
   fillStrip('strip-airing', airing?.Page?.media||[]);
