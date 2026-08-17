@@ -4406,7 +4406,9 @@ function getAnimeCover(a) {
   return String(a?.id) === '21' ? ONE_PIECE_CUSTOM_COVER : (a?.coverImage?.extraLarge || a?.coverImage?.large || '');
 }
 function getAnimeBanner(a) {
-  return String(a?.id) === '21' ? ONE_PIECE_CUSTOM_COVER : (a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '');
+  // Homepage hero must use the exact same artwork source as the normal catalog cards.
+  // This preserves the existing custom One Piece catalog artwork as well.
+  return getAnimeCover(a);
 }
 
 
@@ -4553,11 +4555,9 @@ function buildHero(list){
     const slide=document.createElement('div');
     slide.className='hero-slide'+(i===0?' active':'');
     
-    // Use the exact banner metadata carried by the normal catalog object.
-    // Use the same banner resolver as the normal catalog, including the
-    // existing custom One Piece catalog banner. Prefer AniList's banner
-    // artwork; fall back to the highest-resolution catalog cover only when
-    // an anime has no banner artwork.
+    // Use the exact same image source as the normal catalog cards, including
+    // the existing custom One Piece catalog artwork. No separate Spotlight
+    // artwork source is used.
     const bannerUrl = getAnimeBanner(a);
     const coverUrl = getAnimeCover(a);
     
@@ -7389,9 +7389,9 @@ body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:
 </body>
 
 <style id="anexus-normal-catalog-banner-ULTIMATE">
-/* Final homepage Spotlight treatment: use the catalog banner at its highest
-   available source resolution, keep the sharp artwork uncropped, and create
-   a soft blurred extension only at the bottom where it meets the title. */
+/* Final homepage Spotlight treatment: use the exact normal catalog artwork
+   at its highest available source resolution. Keep it sharp and uncropped,
+   with only a soft blurred extension in the lower fade area. */
 #hero .hero-bg {
   position:absolute !important;
   left:0 !important; right:0 !important; top:0 !important; bottom:auto !important;
