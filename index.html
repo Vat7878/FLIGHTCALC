@@ -1455,11 +1455,24 @@ video {
 <body>
 <div id="anexus-startup" aria-label="Loading AnimeNexus"><div class="anexus-startup-logo">AnimeNexus</div></div>
 <script>
-(()=>{let appReady=false,windowReady=document.readyState==='complete',startupMinTime=false;
-const hide=()=>{if(!appReady||!windowReady||!startupMinTime)return;const s=document.getElementById('anexus-startup');if(!s)return;s.classList.add('ready');setTimeout(()=>s.remove(),420)};
-setTimeout(()=>{startupMinTime=true;hide()},2500);
-window.__animeNexusStartupReady=()=>{appReady=true;hide()};
-window.addEventListener('load',()=>{windowReady=true;hide()},{once:true})})();
+(()=>{
+  let appReady=false, windowReady=document.readyState==='complete', startupMinTime=false;
+  const hide=()=>{
+    if(!appReady || !windowReady || !startupMinTime) return;
+    const s=document.getElementById('anexus-startup');
+    if(!s) return;
+    s.classList.add('ready');
+    setTimeout(()=>s.remove(),420);
+  };
+  setTimeout(()=>{startupMinTime=true;hide()},1800);
+  /* Safety fallback: never trap users behind the splash if an optional API/catalog fails. */
+  setTimeout(()=>{
+    const s=document.getElementById('anexus-startup');
+    if(s){ s.classList.add('ready'); setTimeout(()=>s.remove(),420); }
+  },6500);
+  window.__animeNexusStartupReady=()=>{appReady=true;hide()};
+  window.addEventListener('load',()=>{windowReady=true;hide()},{once:true});
+})();
 </script>
 
 <div id="ambient-bg"></div>
@@ -4963,7 +4976,25 @@ async function playEp(ep) {
               window.activeHlsInstance = null;
           }
 
-          if (window.Hls && Hls.isSupported()) {
+          /* iPhone/iPad Safari has native HLS support. Do NOT force Hls.js there;
+             Safari can play the m3u8 directly and this avoids the common iOS
+             MEDIA_ERR_SRC_NOT_SUPPORTED / player-error path. */
+          if (isIOS && video.canPlayType('application/vnd.apple.mpegurl')) {
+              video.src = proxyUrl;
+              video.load();
+              plyrPlayer = new Plyr(video, {
+                  controls: [
+                      'play-large', 'rewind', 'play', 'fast-forward',
+                      'progress', 'current-time', 'duration', 'mute',
+                      'volume', 'captions', 'settings', 'pip', 'fullscreen'
+                  ],
+                  settings: ['captions', 'speed'],
+                  captions: { active: true, update: true, language: 'en' }
+              });
+              window.activePlyrInstance = plyrPlayer;
+              if (isAutoPlay) video.play().catch(() => {});
+              injectCustomButtons(plyrPlayer);
+          } else if (window.Hls && Hls.isSupported()) {
               const hls = new Hls({
                   maxBufferLength: 30,
                   maxMaxBufferLength: 90,
@@ -5482,6 +5513,7 @@ function scrollDates(dir) {
   // Upcoming/Schedule catalog: One Piece gets first priority when AniList
   // provides its next airing time, followed by the normal schedule feed.
   const upcomingSchedules = upcoming?.Page?.airingSchedules || [];
+  const opMedia = onePiece?.Media || onePiece?.data?.Media || null;
   const opNext = opMedia?.nextAiringEpisode;
   const opSchedule = (opMedia && opNext && opNext.airingAt)
     ? [{ airingAt: opNext.airingAt, episode: opNext.episode, media: opMedia }]
@@ -6563,15 +6595,20 @@ KageWatchAnalytics.init();
 
     const enter=()=>{
       try{
-        /* iPhone/iPad Safari: native video fullscreen is the most reliable path. */
-        if(typeof video.webkitEnterFullscreen==='function'){
+        /* iPhone: use Safari's native video fullscreen. */
+        const isPhone = /iPhone|iPod/i.test(navigator.userAgent);
+        if(isPhone && typeof video.webkitEnterFullscreen==='function'){
           video.webkitEnterFullscreen();
           return;
         }
-        /* Fallback for iPadOS versions exposing the standard Fullscreen API. */
+        /* iPadOS: prefer the standard Fullscreen API when exposed. */
         if(typeof container.requestFullscreen==='function'){
           const r=container.requestFullscreen({navigationUI:'hide'});
           if(r?.catch) r.catch(()=>{});
+          return;
+        }
+        if(typeof video.webkitEnterFullscreen==='function'){
+          video.webkitEnterFullscreen();
           return;
         }
         /* Let Plyr attempt its own implementation as the final fallback. */
