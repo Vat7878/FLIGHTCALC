@@ -4530,7 +4530,7 @@ function buildHero(list){
   cont.innerHTML = ''; dotsEl.innerHTML = '';
   
   if (list.length > 0) {
-    const firstBanner = list[0]?.heroBanner || list[0]?.bannerImage || list[0]?.coverImage?.extraLarge || list[0]?.coverImage?.large || '';
+    const firstBanner = list[0]?.bannerImage || list[0]?.coverImage?.extraLarge || list[0]?.coverImage?.large || '';
     const firstCover = list[0].coverImage.extraLarge || list[0].coverImage.extraLarge;
     
     if (firstBanner) {
@@ -4553,7 +4553,7 @@ function buildHero(list){
     const slide=document.createElement('div');
     slide.className='hero-slide'+(i===0?' active':'');
     
-    const bannerUrl = a?.heroBanner || a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '';
+    const bannerUrl = a?.bannerImage || a?.coverImage?.extraLarge || a?.coverImage?.large || '';
     const coverUrl = a.coverImage.extraLarge || a.coverImage.extraLarge;
     
     slide.innerHTML=`
@@ -5381,7 +5381,11 @@ function injectPlayerMenu(player){
   const menu=document.createElement('div');
   menu.className='anexus-player-menu';
   menu.innerHTML=`
-    <div class="anexus-menu-panel">
+    <div class="anexus-menu-panel" role="dialog" aria-label="Player settings">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+        <div class="anexus-menu-title" style="margin:0;">Player Settings</div>
+        <button type="button" class="anexus-menu-close" data-close aria-label="Close settings">×</button>
+      </div>
       <div class="anexus-menu-title">Audio</div>
       <div class="anexus-menu-row">
         <button type="button" data-lang="sub">SUB</button>
@@ -5405,10 +5409,17 @@ function injectPlayerMenu(player){
     menu.classList.remove('open');
     backToAnimeLanding();
   });
-  menu.querySelector('[data-minimize]').addEventListener('click',(e)=>{
+  const closeMenu=()=>menu.classList.remove('open');
+  menu.querySelector('[data-close]').addEventListener('click',(e)=>{
+    e.preventDefault(); e.stopPropagation(); closeMenu();
+  });
+  menu.querySelector('[data-minimize]').addEventListener('pointerup',(e)=>{
     e.preventDefault(); e.stopPropagation();
-    menu.classList.remove('open');
-    minimizePlayerToOptions();
+    closeMenu();
+    // Exit the AnimeNexus player and return to this anime's detail/hero page.
+    setTimeout(()=>{
+      try { minimizePlayerToOptions(); } catch (_) { try { backToAnimeLanding(); } catch(__) {} }
+    }, 0);
   });
   renderPlayerStreamChoices(menu);
   syncPlayerMenuState(menu);
@@ -5887,7 +5898,7 @@ function scrollDates(dir) {
   const tList=trending?.Page?.media||[];
   // Keep the homepage Spotlight driven by the normal trending rotation.
   // One Piece is prioritized only in the Upcoming/Schedule catalog row below.
-  const heroList = tList.slice(0,5).map(a => ({...a, heroBanner: a.bannerImage || a.coverImage?.extraLarge || a.coverImage?.large || ''}));
+  const heroList = tList.slice(0,5);
   buildHero(heroList);
   fillStrip('strip-trending', tList);
   fillStrip('strip-airing', airing?.Page?.media||[]);
@@ -7333,3 +7344,27 @@ body.anexus-player-fullscreen .plyr:focus-within .plyr__controls{pointer-events:
 </style>
 </body>
 </html>
+
+<style id="anexus-player-menu-final-fix">
+.anexus-player-menu{z-index:2147483646!important;pointer-events:none!important;}
+.anexus-player-menu.open{pointer-events:auto!important;}
+.anexus-player-menu .anexus-menu-panel{pointer-events:auto!important;z-index:2147483647!important;}
+.anexus-player-menu .anexus-menu-close,
+.anexus-player-menu .anexus-minimize-btn,
+.anexus-player-menu .anexus-episodes-btn,
+.anexus-player-menu [data-lang],
+.anexus-player-menu [data-stream-index]{position:relative;z-index:2147483648!important;pointer-events:auto!important;touch-action:manipulation;}
+</style>
+
+<style id="anexus-normal-catalog-hero-source-final">
+/* Spotlight source is the same bannerImage returned for the normal catalog cards. */
+#hero .hero-bg{
+  inset:0!important;
+  transform:none!important;
+  filter:none!important;
+  background-repeat:no-repeat!important;
+  background-position:center top!important;
+  background-size:100% auto!important;
+  background-color:#000!important;
+}
+</style>
